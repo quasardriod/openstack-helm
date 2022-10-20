@@ -28,8 +28,6 @@
       name: kvm
       tasks_from: biosdevname.yml
 
-  - fail:
-
   - name: Set NOPASSWD for {{ansible_user}}
     lineinfile:
       path: "/etc/sudoers.d/{{ansible_user}}"

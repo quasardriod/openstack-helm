@@ -1,3 +1,4 @@
 [submodule "roles"]
 	path = roles
 	url = https://github.com/quasarstack/galaxy.git
+	branch = main
