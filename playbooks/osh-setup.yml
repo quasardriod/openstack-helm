@@ -24,39 +24,6 @@
 
   tasks:
 
-  - name: Set static IP
-    include_role:
-      name: kvm
-      tasks_from: static-ip.yml
-
-  - name: Disable BIOS DEV name for KVM machines
-    include_role:
-      name: kvm
-      tasks_from: biosdevname.yml
-
-  - name: Disable ipv6
-    include_role:
-      name: kvm
-      tasks_from: disable-ipv6.yml
-
-  - name: Set NOPASSWD for {{ansible_user}}
-    lineinfile:
-      path: "/etc/sudoers.d/{{ansible_user}}"
-      regexp: 'ubuntu\sALL='
-      line: 'ubuntu ALL=(ALL:ALL) NOPASSWD:ALL'
-      state: present
-      create: yes
-      validate: 'visudo -cf %s'
-
-  - name: Install packages
-    package:
-      name:
-        - ansible
-        - git
-        - sshpass
-        - make
-      state: latest
-  
   - name: Install google repo gpg key
     shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
 

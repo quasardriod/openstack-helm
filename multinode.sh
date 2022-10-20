@@ -2,15 +2,15 @@
 
 # Setup template
 
-become_pass=true
-	
-if [ $become_pass == "true" ];then
-	ask_pass="-K"
-else
-	ask_pass=""
-fi
-
 cd roles && git pull
 cd ../
 
-ansible-playbook -i inventory osh-setup.yml $ask_pass
+ansible-playbook -i inventory playbooks/hosts-setup.yml
+
+[ $? != 0 ] && echo "Hosts pre-config failed" && exit 1
+
+ansible-playbook -i inventory playbooks/osh-setup.yml
+
+[ $? != 0 ] && echo "K8s pre-config failed" && exit 1
+
+

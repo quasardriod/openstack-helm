@@ -1,0 +1,58 @@
+---
+
+- hosts: all
+  gather_facts: true
+  become: true
+  
+  vars:
+    osh_repos:
+      - name: infra
+        repo: "https://opendev.org/openstack/openstack-helm-infra.git"
+        dest: /opt/openstack-helm-infra
+      - name: component
+        repo: "https://opendev.org/openstack/openstack-helm.git"
+        dest: /opt/openstack-helm
+    virt_type: kvm
+    k8s_nodes_list_file: /tmp/k8s-nodes-list.yml
+
+  pre_tasks:
+  - assert:
+      that:
+        - ansible_distribution == "Ubuntu" 
+        - ansible_distribution_version == "20.04"
+        - ansible_user == "ubuntu"
+
+  tasks:
+
+  - name: Set static IP
+    include_role:
+      name: kvm
+      tasks_from: static-ip.yml
+
+  - name: Disable BIOS DEV name for KVM machines
+    include_role:
+      name: kvm
+      tasks_from: biosdevname.yml
+
+  - name: Disable ipv6
+    include_role:
+      name: kvm
+      tasks_from: disable-ipv6.yml
+
+  - name: Set NOPASSWD for {{ansible_user}}
+    lineinfile:
+      path: "/etc/sudoers.d/{{ansible_user}}"
+      regexp: 'ubuntu\sALL='
+      line: 'ubuntu ALL=(ALL:ALL) NOPASSWD:ALL'
+      state: present
+      create: yes
+      validate: 'visudo -cf %s'
+
+  - name: Install packages
+    package:
+      name:
+        - git
+        - sshpass
+        - make
+      state: latest
+  
