@@ -2,18 +2,15 @@
 
 # Setup template
 
-template(){
-	become_pass=false
+become_pass=true
 	
-	if [ $become_pass == "true" ];then
-		ask_pass="-K"
-	else
-		ask_pass=""
-	fi
-	cd roles && git pull
-	cd ../
+if [ $become_pass == "true" ];then
+	ask_pass="-K"
+else
+	ask_pass=""
+fi
 
-	ansible-playbook -i inventory ubuntu-setup.yml $ask_pass
-}
+cd roles && git pull
+cd ../
 
-template
+ansible-playbook -i inventory osh-setup.yml $ask_pass
