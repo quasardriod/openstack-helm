@@ -48,8 +48,11 @@
       create: yes
       validate: 'visudo -cf %s'
 
+  - name: Update cache
+    command: apt update
+
   - name: Install packages
-    package:
+    apt:
       name:
         - git
         - sshpass
@@ -59,4 +62,9 @@
         - ca-certificates
         - curl
       state: latest
+    register: _install_pkg
+    retries: 3
+    delay: 5
+    until: _install_pkg is success
+
   
