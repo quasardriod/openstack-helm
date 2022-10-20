@@ -24,3 +24,15 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 - Run `./multinode.sh` for multinode deployment
 
+- Login in master node and run playbook for k8s master node setup [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html)
+```bash
+#!/bin/bash
+set -xe
+cd /opt/openstack-helm-infra
+make dev-deploy setup-host multinode
+make dev-deploy k8s multinode
+```
+
+
+
+
