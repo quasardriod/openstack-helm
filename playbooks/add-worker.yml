@@ -1,0 +1,46 @@
+---
+
+- hosts: all
+  gather_facts: true
+  become: true
+
+  tasks:
+  - name: Get services facts
+    service_facts:
+  
+  - fail:
+      msg: "docker service is not running"
+    when: ansible_facts.services["docker.service"]["state"] != "running"
+
+  - name: Install kubeadm
+    package:
+      name: 
+        - apt-transport-https
+        - ca-certificates
+        - curl
+      state: latest
+    when: node_type == "worker"
+
+  - name: Get kubeadm path
+    shell: find /var/lib/minikube -name kubeadm -type f
+    register: _kadm
+    when: node_type == "master"
+    run_once: true
+
+  - name: Generate token
+    shell: '{{_kadm.stdout}} token create --print-join-command'
+    register: _kadm_token
+    when: node_type == "master"
+    run_once: true
+
+  - debug:
+      var: _kadm_token.stdout
+    when: node_type == "master"
+    run_once: true
+
+  
+  - name: Run kubeadm join on worker node
+    shell: '{{_kadm_token.stdout}}'
+    when: node_type == "worker"
+
+  

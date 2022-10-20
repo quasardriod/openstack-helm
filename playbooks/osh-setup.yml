@@ -23,9 +23,12 @@
         - ansible_user == "ubuntu"
 
   tasks:
+  - name: Install google cloud public signing key
+    shell: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+#    shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
 
-  - name: Install google repo gpg key
-    shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+  - name: Add kubernetes apt key
+    shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
 
   - name: Enable br_netfilter on reboot
     lineinfile:
@@ -107,8 +110,8 @@
       line: 'kubernetes_network_default_device: {{_default_iface.stdout}}'
       state: present
 
-  - name: Install Packages
-    package:
-      name:
-        - docker.io
-      state: latest
+#  - name: Install Packages
+#    package:
+#      name:
+#        - docker.io
+#      state: latest

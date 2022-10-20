@@ -55,5 +55,8 @@
         - sshpass
         - make
         - python3-pip
+        - apt-transport-https
+        - ca-certificates
+        - curl
       state: latest
   
