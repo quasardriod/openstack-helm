@@ -106,3 +106,9 @@
       regexp: '^kubernetes_network_default_device'
       line: 'kubernetes_network_default_device: {{_default_iface.stdout}}'
       state: present
+
+  - name: Install Packages
+    package:
+      name:
+        - docker.io
+      state: latest

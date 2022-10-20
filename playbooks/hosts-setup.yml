@@ -54,5 +54,6 @@
         - git
         - sshpass
         - make
+        - python3-pip
       state: latest
   
