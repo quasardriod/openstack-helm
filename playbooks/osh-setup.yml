@@ -102,6 +102,13 @@
       dest: /opt/openstack-helm-infra/tools/gate/devel/multinode-inventory.yaml
     become: false
 
+  - name: Update /etc/hosts file
+    lineinfile:
+      path: /etc/hosts
+      line: '{{item.ipaddr}} {{item.host}}'
+      state: present
+    with_items: "{{k8s_nodes_list}}"
+
   - name: default net interface
     shell: ip -4 route list 0/0 | awk '{ print $5; exit }'
     register: _default_iface
