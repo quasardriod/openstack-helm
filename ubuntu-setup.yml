@@ -28,6 +28,16 @@
       name: kvm
       tasks_from: biosdevname.yml
 
+  - name: Set static IP
+    include_role:
+      name: kvm
+      tasks_from: static-ip.yml
+
+  - name: Disable ipv6
+    include_role:
+      name: kvm
+      tasks_from: disable-ipv6.yml
+
   - name: Set NOPASSWD for {{ansible_user}}
     lineinfile:
       path: "/etc/sudoers.d/{{ansible_user}}"
@@ -62,4 +72,16 @@
       path: /opt
       owner: "{{ansible_user}}"
       recurse: yes
+
+  - name: clone openstack helm code
+    shell: |
+      if [! -d {{item.dest}} ];then
+        git clone {{item.repo}} {{item.dest}}
+      fi
+    with_items: "{{osh_repos}}"
+    register: _clone
+    retries: 3
+    delay: 5
+    until: _clone is success
+    become: false
 
