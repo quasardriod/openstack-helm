@@ -18,7 +18,7 @@ worker1 ansible_host=192.168.10.17 node_type=worker
 [all:vars]
 ansible_user=ubuntu
 ansible_password=redhat
-ansible_sudo_password=redhat
+ansible_become_password=redhat
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
