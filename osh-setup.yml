@@ -54,6 +54,7 @@
         - ansible
         - git
         - sshpass
+        - make
       state: latest
   
   - name: Install google repo gpg key
