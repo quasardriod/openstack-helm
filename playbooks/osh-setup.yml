@@ -46,11 +46,14 @@
       owner: "{{ansible_user}}"
       recurse: yes
 
+  - name: Delete existing cloned repo
+    file:
+      path: "{{item.dest}}"
+      state: absent
+    with_items: "{{osh_repos}}"
+    
   - name: clone openstack helm code
-    shell: |
-      if [ ! -d {{item.dest}} ];then
-        git clone {{item.repo}} {{item.dest}}
-      fi
+    shell: git clone {{item.repo}} {{item.dest}}
     with_items: "{{osh_repos}}"
     register: _clone
     retries: 3
@@ -110,8 +113,7 @@
       line: 'kubernetes_network_default_device: {{_default_iface.stdout}}'
       state: present
 
-#  - name: Install Packages
-#    package:
-#      name:
-#        - docker.io
-#      state: latest
+  - name: Update openstack-helm-infra/tools/gate/devel/start.sh to start kubeadm based installation
+    shell: sed -i -e 's/deploy-k8s/deploy-k8s-kubeadm/g' tools/gate/devel/start.sh
+    args:
+      chdir: /opt/openstack-helm-infra
