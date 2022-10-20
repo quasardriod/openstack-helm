@@ -1,0 +1,67 @@
+---
+
+- hosts: all
+  gather_facts: true
+  become: true
+  
+  vars:
+    osh_repos:
+      - name: infra
+        repo: "https://opendev.org/openstack/openstack-helm-infra.git"
+        dest: /opt/openstack-helm-infra
+      - name: component
+        repo: "https://opendev.org/openstack/openstack-helm.git"
+        dest: /opt/openstack-helm
+
+    virt_type: kvm
+
+  pre_tasks:
+  - assert:
+      that:
+        - ansible_distribution == "Ubuntu" 
+        - ansible_distribution_version == "20.04"
+        - ansible_user == "ubuntu"
+
+  tasks:
+  - name: Disable BIOS DEV name for KVM machines
+    include_role:
+      name: kvm
+      tasks_from: biosdevname.yml
+
+  - fail:
+
+  - name: Set NOPASSWD for {{ansible_user}}
+    lineinfile:
+      path: "/etc/sudoers.d/{{ansible_user}}"
+      regexp: 'ubuntu\sALL='
+      line: 'ubuntu ALL=(ALL:ALL) NOPASSWD:ALL'
+      state: present
+      create: yes
+      validate: 'visudo -cf %s'
+
+  - name: Install packages
+    package:
+      name:
+        - ansible
+        - git
+      state: latest
+  
+  - name: Install google repo gpg key
+    shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
+
+  - name: Enable br_netfilter on reboot
+    lineinfile:
+      path: '/etc/modules-load.d/br_netfilter.conf'
+      line: 'br_netfilter'
+      state: present
+      create: yes
+  
+  - name: Enable br_netfilter on runtime
+    shell: modprobe br_netfilter
+
+  - name: Set /opt ownership to {{ansible_user}}
+    file:
+      path: /opt
+      owner: "{{ansible_user}}"
+      recurse: yes
+

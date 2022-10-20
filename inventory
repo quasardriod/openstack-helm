@@ -1,0 +1,7 @@
+192.168.10.17
+
+[all:vars]
+ansible_user=ubuntu
+ansible_password=redhat
+ansible_sudo_password=redhat
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
