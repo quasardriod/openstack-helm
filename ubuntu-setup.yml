@@ -12,8 +12,8 @@
       - name: component
         repo: "https://opendev.org/openstack/openstack-helm.git"
         dest: /opt/openstack-helm
-
     virt_type: kvm
+    k8s_nodes_list_file: /tmp/k8s-nodes-list.yml
 
   pre_tasks:
   - assert:
@@ -23,15 +23,16 @@
         - ansible_user == "ubuntu"
 
   tasks:
-  - name: Disable BIOS DEV name for KVM machines
-    include_role:
-      name: kvm
-      tasks_from: biosdevname.yml
 
   - name: Set static IP
     include_role:
       name: kvm
       tasks_from: static-ip.yml
+
+  - name: Disable BIOS DEV name for KVM machines
+    include_role:
+      name: kvm
+      tasks_from: biosdevname.yml
 
   - name: Disable ipv6
     include_role:
@@ -52,6 +53,7 @@
       name:
         - ansible
         - git
+        - sshpass
       state: latest
   
   - name: Install google repo gpg key
@@ -75,7 +77,7 @@
 
   - name: clone openstack helm code
     shell: |
-      if [! -d {{item.dest}} ];then
+      if [ ! -d {{item.dest}} ];then
         git clone {{item.repo}} {{item.dest}}
       fi
     with_items: "{{osh_repos}}"
@@ -85,3 +87,54 @@
     until: _clone is success
     become: false
 
+  - name: Set hostname
+    hostname:
+      name: "{{inventory_hostname}}"
+      use: systemd
+
+  - name: Remove {{k8s_nodes_list_file}} from localhost
+    file:
+      path: "{{k8s_nodes_list_file}}"
+      state: absent
+    delegate_to: localhost
+    become: false
+    run_once: true
+
+  - name: Create {{k8s_nodes_list_file}} on localhost
+    lineinfile:
+      path: "{{k8s_nodes_list_file}}"
+      line: 'k8s_nodes_list:'
+      state: present
+      create: yes
+    delegate_to: localhost
+    become: false
+    run_once: true
+
+  - name: Append hosts in {{k8s_nodes_list_file}} on localhost
+    shell: |
+      echo "  - host: {{inventory_hostname}}" >> {{k8s_nodes_list_file}}
+      echo "    ipaddr: {{ansible_host}}" >> {{k8s_nodes_list_file}}
+      echo "    node_type: {{node_type}}" >> {{k8s_nodes_list_file}}
+    delegate_to: localhost
+    become: false
+    
+  - name: Load vars from {{k8s_nodes_list_file}}
+    include_vars:
+      file: "{{k8s_nodes_list_file}}"
+
+  - name: Template out inventory for kubenodes setup
+    template:
+      src: multinode-inventory.j2
+      dest: /opt/openstack-helm-infra/tools/gate/devel/multinode-inventory.yaml
+    become: false
+
+  - name: default net interface
+    shell: ip -4 route list 0/0 | awk '{ print $5; exit }'
+    register: _default_iface
+  
+  - name: Add kubernetes_network_default_device var in multinode vars file
+    lineinfile:
+      path: /opt/openstack-helm-infra/tools/gate/devel/multinode-vars.yaml
+      regexp: '^kubernetes_network_default_device'
+      line: 'kubernetes_network_default_device: {{_default_iface.stdout}}'
+      state: present

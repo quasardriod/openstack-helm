@@ -1,0 +1,26 @@
+all:
+  children:
+    primary:
+      hosts:
+{% for h in k8s_nodes_list %}
+{% if h.node_type == "master" %}
+        {{h.host}}:
+          ansible_port: 22
+          ansible_host: {{h.ipaddr}}
+          ansible_user: {{ansible_user}}
+          ansible_password: {{ansible_password}}
+          ansible_ssh_extra_args: -o StrictHostKeyChecking=no
+{% endif %}
+{% endfor %}
+    nodes:
+      hosts:
+{% for h in k8s_nodes_list %}
+{% if h.node_type != "master" %}
+        {{h.host}}:
+          ansible_port: 22
+          ansible_host: {{h.ipaddr}}
+          ansible_user: {{ansible_user}}
+          ansible_password: {{ansible_password}}
+          ansible_ssh_extra_args: -o StrictHostKeyChecking=no
+{% endif %}
+{% endfor %}

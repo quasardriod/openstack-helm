@@ -3,7 +3,7 @@
 # Setup template
 
 template(){
-	become_pass=true
+	become_pass=false
 	
 	if [ $become_pass == "true" ];then
 		ask_pass="-K"
