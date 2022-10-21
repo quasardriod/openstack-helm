@@ -5,22 +5,64 @@
   become: true
 
   tasks:
-  - name: Get services facts
-    service_facts:
-  
-  - fail:
-      msg: "docker service is not running"
-    when: ansible_facts.services["docker.service"]["state"] != "running"
+  - block:
+
+    - name: Create /etc/apt/keyrings
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: 0755
+        owner: root
+        group: root
+    
+    - name: Get stat of /etc/apt/keyrings/docker.gpg
+      stat:
+        path: /etc/apt/keyrings/docker.gpg
+      register: _docker_gpg
+
+    - name: Install Docker GPG key
+      shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      when: not _docker_gpg.stat.exists
+
+    - name: Setup docker reposiroty
+      shell: |
+        echo  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    - name: Remove existing packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - docker-ce-rootless-extras
+          - docker-scan-plugin
+          - docker.io
+        state: absent
+        autoremove: yes
+      
+    - name: Install docker packages
+      apt:
+        name:
+          - docker.io
+          - containerd 
+          - kubelet
+        autoremove: yes
+        update_cache: yes
+        state: latest
+    when: node_type == "worker"
 
   - name: swapoff
     command: swapoff -a
     when: node_type == "worker"
 
-  - name: Fetch kubeadm binary from master node
+  - name: Fetch files from master
     fetch:
-      src: /usr/bin/kubeadm
+      src: "{{item}}"
       dest: /tmp/
       flat: yes
+    with_items:
+      - /etc/docker/daemon.json
+      - /usr/bin/kubeadm
     when: node_type == "master"
     run_once: true
 
@@ -32,6 +74,21 @@
       owner: root
       group: root
     when: node_type == "worker"
+  
+  - name: Copy docker daemon json on worker nodes
+    copy:
+      src: /tmp/daemon.json
+      dest: /etc/docker/
+      mode: 0644
+      owner: root
+      group: root
+    when: node_type == "worker"
+
+  - name: Restart docker service
+    systemd:
+      name: docker
+      state: restarted
+      enabled: yes
 
   - name: Generate token
     shell: 'kubeadm token create --print-join-command'
@@ -56,6 +113,6 @@
       state: absent
     when: node_type == "worker"
 
-  - name: Run kubeadm join on worker node
-    shell: '{{_kadm_token.stdout}}'
-    when: node_type == "worker"
+#  - name: Run kubeadm join on worker node
+#    shell: '{{_kadm_token.stdout}}'
+#    when: node_type == "worker"

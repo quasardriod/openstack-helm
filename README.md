@@ -7,6 +7,14 @@ Complete prerequisites of K8s machines for the easy deployment of k8s and openst
 * [Gate-Based Kubernetes](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html)
 * [Multi node deployment](https://docs.openstack.org/openstack-helm/latest/install/multinode.html)
 
+### Features & changes list:
+- Disable biosdevname
+- Disable IPv6
+- Configure Static IP
+- Install Google Cloud repo GPG Key
+- Generate inventory for OSH multinode deployment
+- Add new worker node to cluster deployed using kubeadm
+
 ## Implementation
 
 - Update K8s node information and auth creds in inventory. `node_type` in above snippet is K8S node type
@@ -32,7 +40,3 @@ cd /opt/openstack-helm-infra
 make dev-deploy setup-host multinode
 make dev-deploy k8s multinode
 ```
-
-
-
-

@@ -15,6 +15,7 @@
     virt_type: kvm
     k8s_nodes_list_file: /tmp/k8s-nodes-list.yml
     multinode_deployment: false
+    ssh_key_pair: "osh_keys"
 
   pre_tasks:
   - assert:
@@ -24,6 +25,56 @@
         - ansible_user == "ubuntu"
 
   tasks:
+  - name: Generate ssh keypair on localhost for OSH
+    openssh_keypair:
+        path: "/tmp/{{ssh_key_pair}}"
+        type: rsa
+        size: 4096
+        state: present
+        force: no
+    delegate_to: localhost
+    become: false
+    run_once: true
+  
+  - name: Copy private key on master node
+    copy:
+      src: "/tmp/{{ssh_key_pair}}"
+      dest: "/home/{{ansible_user}}/.ssh/id_rsa"
+      mode: 0600
+      owner: "{{ansible_user}}"
+      group: "{{ansible_user}}"
+    become: false
+    when: node_type == "master"
+
+  - name: Copy public key on master node
+    copy:
+      src: "/tmp/{{ssh_key_pair}}.pub"
+      dest: "/home/{{ansible_user}}/.ssh/id_rsa.pub"
+      mode: 0644
+      owner: "{{ansible_user}}"
+      group: "{{ansible_user}}"
+    become: false
+    when: node_type == "master"
+
+  - name: Install public key on worker nodes
+    authorized_key:
+      user: "{{ansible_user}}"
+      state: present
+      key: "{{lookup('file', '/tmp/{{ssh_key_pair}}.pub')}}"
+    become: false
+
+  - name: Create /etc/openstack-helm
+    file:
+      path: /etc/openstack-helm
+      state: directory
+
+  - name: Copy private key in /etc/openstack-helm
+    copy:
+      src: "/tmp/{{ssh_key_pair}}"
+      dest: /etc/openstack-helm/deploy-key.pem
+      owner: "{{ansible_user}}"
+      mode: 0600
+      
   - name: Install google cloud public signing key
     shell: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
 
@@ -120,21 +171,8 @@
       line: 'kubernetes_network_default_device: {{_default_iface.stdout}}'
       state: present
 
-  - name: Install docker packages
-    apt:
-      name:
-        - docker-ce
-        - docker-ce-cli
-        - docker-ce-rootless-extras
-        - docker-scan-plugin
-        - docker.io
-      update_cache: yes
-      state: latest
-
   - name: Update openstack-helm-infra/tools/gate/devel/start.sh to start kubeadm based installation
     shell: sed -i -e 's/deploy-k8s/deploy-k8s-kubeadm/g' tools/gate/devel/start.sh
     args:
       chdir: /opt/openstack-helm-infra
     when: multinode_deployment|bool
-
-

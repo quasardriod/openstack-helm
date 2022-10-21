@@ -48,9 +48,6 @@
       create: yes
       validate: 'visudo -cf %s'
 
-  - name: Update cache
-    command: apt update
-
   - name: Install packages
     apt:
       name:
@@ -62,6 +59,7 @@
         - ca-certificates
         - curl
       state: latest
+      update_cache: yes
     register: _install_pkg
     retries: 3
     delay: 5
