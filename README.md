@@ -18,7 +18,7 @@ Complete prerequisites of K8s machines for the easy deployment of k8s and openst
 
 ## Implementation
 
-- Clone repo
+- Clone code in ansible controller
 ```bash
 git clone --recurse-submodules https://github.com/quasarenergy/openstack-helm.git
 ```
@@ -36,9 +36,9 @@ ansible_become_password=redhat
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
-- Run `./multinode.sh` for multinode deployment
+- Run `./multinode.sh` for multinode deployment in ansible controller
 
-- Login in master node and run playbook for k8s master node setup [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html)
+- Login in k8s master node and run playbook for k8s master node setup [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html)
 ```bash
 #!/bin/bash
 set -xe
@@ -47,7 +47,7 @@ make dev-deploy setup-host multinode
 make dev-deploy k8s multinode
 ```
 
-- Add worker node to cluster
+- Add worker node to cluster. Run below script in ansible controller
 ```bash
 ./add-worker.sh
 ```
