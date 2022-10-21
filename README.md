@@ -17,6 +17,11 @@ Complete prerequisites of K8s machines for the easy deployment of k8s and openst
 
 ## Implementation
 
+- Clone repo
+```bash
+git clone --recurse-submodules git@github.com:quasarenergy/openstack-helm.git
+```
+
 - Update K8s node information and auth creds in inventory. `node_type` in above snippet is K8S node type
 
 ```
