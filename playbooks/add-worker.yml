@@ -3,6 +3,7 @@
 - hosts: all
   gather_facts: true
   become: true
+  any_errors_fatal: true
 
   tasks:
   - block:
@@ -45,7 +46,6 @@
         name:
           - docker.io
           - containerd 
-          - kubelet
         autoremove: yes
         update_cache: yes
         state: latest
@@ -62,19 +62,9 @@
       flat: yes
     with_items:
       - /etc/docker/daemon.json
-      - /usr/bin/kubeadm
     when: node_type == "master"
     run_once: true
 
-  - name: Copy kubeadm binary on worker nodes
-    copy:
-      src: /tmp/kubeadm
-      dest: /usr/bin
-      mode: 0755
-      owner: root
-      group: root
-    when: node_type == "worker"
-  
   - name: Copy docker daemon json on worker nodes
     copy:
       src: /tmp/daemon.json
@@ -84,12 +74,29 @@
       group: root
     when: node_type == "worker"
 
-  - name: Restart docker service
-    systemd:
-      name: docker
-      state: restarted
-      enabled: yes
+  - name: Get enable kubeadm repo from master
+    shell: apt list -a kubeadm|awk '/now/{print $2}'
+    register: _kadm_repo
+    when: node_type == "master"
+    run_once: true
 
+  - debug:
+      var: _kadm_repo.stdout
+    when: node_type == "master"
+    run_once: true
+   
+  - name: Install kube packages on worker nodes
+    apt: 
+      name:
+        - "{{item}}={{_kadm_repo.stdout}}"
+      state: present
+      update_cache: yes
+      allow_downgrade: yes
+    with_items:
+      - kubeadm
+      - kubelet
+    when: node_type == "worker"
+    
   - name: Generate token
     shell: 'kubeadm token create --print-join-command'
     register: _kadm_token
@@ -101,18 +108,30 @@
     when: node_type == "master"
     run_once: true
 
-  - name: Restart docker service
-    systemd:
-      name: docker
-      state: restarted
-    when: node_type == "worker"
-
   - name: Cleanup existing files
     file:
       path: /etc/kubernetes
       state: absent
     when: node_type == "worker"
 
-#  - name: Run kubeadm join on worker node
-#    shell: '{{_kadm_token.stdout}}'
-#    when: node_type == "worker"
+  - name: Stop kubelet
+    systemd:
+      name: kubelet
+      state: stopped
+    when: node_type == "worker"
+    
+  - name: Run kubeadm join on worker node
+    shell: '{{_kadm_token.stdout}}'
+    when: node_type == "worker"
+
+  - name: Check Ready status of new added node
+    shell: kubectl get nodes |egrep {{inventory_hostname}}|egrep Ready
+    register: _node_ready
+    retries: 5
+    delay: 10
+    until: _node_ready.rc == 0
+    when: node_type == "worker"
+
+  - name: Set Worker nodes label to worker
+    shell: kubectl label node {{inventory_hostname}} node-role.kubernetes.io/worker=worker
+    when: node_type == "worker"
