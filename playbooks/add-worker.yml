@@ -96,15 +96,15 @@
   - debug:
       var: kube_node_status
 
-  - name: Remove existing Ready node from play_hosts
+  - name: Remove existing Ready worker node from play_hosts
     meta: end_host
     when: 
       - node_type == "worker"
       - kube_node_status|bool
     
-  - name: Abort playbook if no worker node left
+  - name: Abort playbook if no worker node left to add in cluster
     meta: end_host
-    when: "'worker' not in ansible_play_hosts"
+    when: ansible_play_hosts is not search('worker')
 
   tasks:
   - block:
