@@ -2,12 +2,34 @@
 
 ## Purpose
 
-Complete prerequisites of K8s machines for the easy deployment of k8s and openstack using opensource [openstack helm](https://docs.openstack.org/openstack-helm/latest/)
+Setup system pre-requisites of machines for the easy deployment of k8s and openstack using opensource [openstack helm](https://docs.openstack.org/openstack-helm/latest/) project.
 
 * [Gate-Based Kubernetes](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html)
 * [Multi node deployment](https://docs.openstack.org/openstack-helm/latest/install/multinode.html)
 
-### Features & changes list:
+## Requirements
+
+**System Requirements:**
+- Ansible controller:
+	- cpu: 2
+	- memory: 4GB
+	- Packages:
+		- ansible-core 2.12+
+
+- K8s master:
+	- cpu: 6+
+	- memory: 8GB+ 
+
+- K8s worker:
+	- cpu: 2+
+	- memory: 4GB+ 
+
+**Install ansible package in ansible controller:**
+```bash
+pip3 install ansible-core --user
+```
+
+## Features & changes list
 - Disable biosdevname
 - Disable IPv6
 - Configure Static IP
@@ -18,12 +40,12 @@ Complete prerequisites of K8s machines for the easy deployment of k8s and openst
 
 ## Implementation
 
-- Clone code in ansible controller
+1. Clone code in ansible controller
 ```bash
 git clone --recurse-submodules https://github.com/quasarenergy/openstack-helm.git
 ```
 
-- Update K8s node information and auth creds in inventory. `node_type` in above snippet is K8S node type
+2. Update K8s node information and auth creds in inventory. `node_type` in above snippet is K8S node type
 
 ```
 master ansible_host=192.168.10.235 node_type=master
@@ -36,19 +58,20 @@ ansible_become_password=redhat
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
-- Run `./multinode.sh` in ansible controller for multinode deployments of k8s
-
-- Login in k8s master node and run playbook for k8s master node setup [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html)
+3. Run below script in ansible controller to push pre-requisites changes for multinode k8s deployment
 ```bash
-#!/bin/bash
-set -xe
+./multinode.sh
+```
+
+4. Login in k8s master and run below commands[source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html). This step will deploy only k8s master.
+
+```bash
 cd /opt/openstack-helm-infra
 make dev-deploy setup-host multinode
 make dev-deploy k8s multinode
 ```
 
-- Run below script in ansible controller to add worker nodes in cluster
+5. Run below script in ansible controller to add worker nodes in existing cluster
 ```bash
 ./add-worker.sh
 ```
-
