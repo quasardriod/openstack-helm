@@ -25,12 +25,13 @@ Setup system pre-requisites of machines for the easy deployment of k8s and opens
 	- memory: 4GB+ 
 
 **Install ansible in ansible controller:**
+
 ```bash
 pip3 install ansible-core --user
 ```
 
-**Ansible collections:**
 Following collections will be installed in ansible controller:
+
 ```
 ansible-galaxy collection install community.crypto
 ansible-galaxy collection install ansible.posix
