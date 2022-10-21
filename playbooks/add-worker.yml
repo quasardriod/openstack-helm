@@ -185,17 +185,6 @@
       - kubelet
     when: node_type == "worker"
     
-  - name: Generate token
-    shell: 'kubeadm token create --print-join-command'
-    register: _kadm_token
-    when: node_type == "master"
-    run_once: true
-
-  - debug:
-      var: _kadm_token.stdout
-    when: node_type == "master"
-    run_once: true
-
   - name: Cleanup existing files
     file:
       path: /etc/kubernetes
@@ -208,18 +197,40 @@
       state: stopped
     when: node_type == "worker"
     
+  - name: Restart docker
+    systemd:
+      name: docker
+      state: restarted
+    when: node_type == "worker"
+
+  - name: Generate token
+    shell: 'kubeadm token create --print-join-command'
+    register: _kadm_token
+    when: node_type == "master"
+    run_once: true
+
+  - debug:
+      var: _kadm_token.stdout
+    when: node_type == "master"
+    run_once: true
+
   - name: Run kubeadm join on worker node
     shell: '{{_kadm_token.stdout}}'
     when: node_type == "worker"
 
   - name: Check Ready status of new added node
-    shell: kubectl get nodes |egrep {{inventory_hostname}}|egrep Ready
+    shell: kubectl get nodes --field-selector metadata.name={{inventory_hostname}}|egrep Ready
     register: _node_ready
     retries: 5
     delay: 10
     until: _node_ready.rc == 0
-    when: node_type == "worker"
+    delegate_to: localhost
+    when: inventory_hostname is search('worker')
+    become: false
 
   - name: Set Worker nodes label to worker
     shell: kubectl label node {{inventory_hostname}} node-role.kubernetes.io/worker=worker
-    when: node_type == "worker"
+    delegate_to: localhost
+    when: inventory_hostname is search('worker')
+    become: false
+    
