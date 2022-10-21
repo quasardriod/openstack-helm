@@ -234,3 +234,6 @@
     when: inventory_hostname is search('worker')
     become: false
     
+  - debug:
+      msg: "Added {{inventory_hostname}} successfully in kubernetes cluster"
+    when: node_type == "worker"
