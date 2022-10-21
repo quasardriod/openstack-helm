@@ -3,11 +3,111 @@
 - hosts: all
   gather_facts: true
   become: true
-  any_errors_fatal: true
+  #any_errors_fatal: true
+
+  pre_tasks:
+  - name: Create dirs in "{{lookup('env', 'HOME')}}/" on localhost
+    file:
+      path: "{{item}}"
+      state: directory
+    run_once: true
+    become: false
+    delegate_to: localhost
+    with_items:
+      - "{{lookup('env', 'HOME')}}/.local/bin/"
+      - "{{lookup('env', 'HOME')}}/.kube"
+
+  - name: Check kubectl on localhost
+    stat: 
+      path: "{{lookup('env', 'HOME')}}/.local/bin/kubectl"
+    register: _kctl_local
+    run_once: true
+    delegate_to: localhost
+    become: false
+
+  - name: Get kubectl version from master
+    shell: kubectl version|tr ',' '\n'|egrep GitVersion|head -1|cut -d':' -f2|xargs
+    register: _kubectl_v
+    run_once: true
+    when: not _kctl_local.stat.exists and node_type == "master"
+      
+  - name: Download kubectl binary on localhost
+    get_url:
+      url: "https://dl.k8s.io/release/{{_kubectl_v.stdout}}/bin/linux/amd64/kubectl"
+      dest: "{{lookup('env', 'HOME')}}/.local/bin/"
+      mode: 0755
+    delegate_to: localhost
+    become: false
+    run_once: true
+    when: not _kctl_local.stat.exists
+
+  - name: Fetch kube config from master to localhost
+    fetch:
+      src: "/home/{{ansible_user}}/.kube/config"
+      dest: "{{lookup('env', 'HOME')}}/.kube/"
+      flat: yes
+    when: node_type == "master"
+    become: false
+    run_once: true
+     
+  - name: Remove /tmp/node-status.yml
+    file:
+      path: /tmp/node-status.yml
+      state: absent
+    delegate_to: localhost
+    become: false
+    run_once: true
+
+  - name: Create /tmp/node-status.yml
+    lineinfile:
+      path: /tmp/node-status.yml
+      line: 'node_status:'
+      create: yes
+    delegate_to: localhost
+    become: false
+    run_once: true
+ 
+  - name: List cluster nodes
+    shell: |
+      if kubectl get nodes --field-selector metadata.name={{inventory_hostname}}|egrep Ready;then
+        echo "  - host: {{inventory_hostname}}" >> /tmp/node-status.yml
+        echo "    ready: true" >> /tmp/node-status.yml
+      else
+        echo "  - host: {{inventory_hostname}}" >> /tmp/node-status.yml
+        echo "    ready: false" >> /tmp/node-status.yml
+      fi
+    delegate_to: localhost
+    become: false
+
+  - name: Include vars from /tmp/node-status.yml
+    include_vars:
+      file: /tmp/node-status.yml
+
+  - debug:
+      var: node_status  
+    run_once: true
+
+  - name: Set fact kube_node_status
+    set_fact:
+      kube_node_status: "{{item.ready}}"
+    with_items: "{{node_status}}"
+    when: item.host == inventory_hostname
+  
+  - debug:
+      var: kube_node_status
+
+  - name: Remove existing Ready node from play_hosts
+    meta: end_host
+    when: 
+      - node_type == "worker"
+      - kube_node_status|bool
+    
+  - name: Abort playbook if no worker node left
+    meta: end_host
+    when: "'worker' not in ansible_play_hosts"
 
   tasks:
   - block:
-
     - name: Create /etc/apt/keyrings
       file:
         path: /etc/apt/keyrings
@@ -30,17 +130,6 @@
         echo  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
         $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-    - name: Remove existing packages
-      apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - docker-ce-rootless-extras
-          - docker-scan-plugin
-          - docker.io
-        state: absent
-        autoremove: yes
-      
     - name: Install docker packages
       apt:
         name:
@@ -74,21 +163,20 @@
       group: root
     when: node_type == "worker"
 
-  - name: Get enable kubeadm repo from master
+  - name: Get kubeadm version from master
     shell: apt list -a kubeadm|awk '/now/{print $2}'
-    register: _kadm_repo
+    register: _kadm_version
     when: node_type == "master"
     run_once: true
 
   - debug:
-      var: _kadm_repo.stdout
-    when: node_type == "master"
+      var: _kadm_version.stdout
     run_once: true
-   
+
   - name: Install kube packages on worker nodes
     apt: 
       name:
-        - "{{item}}={{_kadm_repo.stdout}}"
+        - "{{item}}={{_kadm_version.stdout}}"
       state: present
       update_cache: yes
       allow_downgrade: yes
