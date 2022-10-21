@@ -36,7 +36,7 @@ ansible_become_password=redhat
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
-- Run `./multinode.sh` for multinode deployment in ansible controller
+- Run `./multinode.sh` in ansible controller for multinode deployments of k8s
 
 - Login in k8s master node and run playbook for k8s master node setup [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html)
 ```bash
@@ -47,7 +47,7 @@ make dev-deploy setup-host multinode
 make dev-deploy k8s multinode
 ```
 
-- Add worker node to cluster. Run below script in ansible controller
+- Run below script in ansible controller to add worker nodes in cluster
 ```bash
 ./add-worker.sh
 ```
