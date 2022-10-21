@@ -16,25 +16,22 @@
     command: swapoff -a
     when: node_type == "worker"
 
-  - name: Fetch kubeadm binary from master node
-    fetch:
-      src: /usr/bin/kubeadm
-      dest: /tmp/
-      flat: yes
+  - name: Install kubeadm
+    apt:
+      name: 
+        - kubeadma
+      update_cache: yes
+      state: latest
+    when: node_type == "worker"
+
+  - name: Get kubeadm path
+    shell: find /var/lib/minikube -name kubeadm -type f
+    register: _kadm
     when: node_type == "master"
     run_once: true
 
-  - name: Copy kubeadm binary on worker nodes
-    copy:
-      src: /tmp/kubeadm
-      dest: /usr/bin
-      mode: 0755
-      owner: root
-      group: root
-    when: node_type == "worker"
-
   - name: Generate token
-    shell: 'kubeadm token create --print-join-command'
+    shell: '{{_kadm.stdout}} token create --print-join-command'
     register: _kadm_token
     when: node_type == "master"
     run_once: true
@@ -44,18 +41,7 @@
     when: node_type == "master"
     run_once: true
 
-  - name: Restart docker service
-    systemd:
-      name: docker
-      state: restarted
-    when: node_type == "worker"
-
-  - name: Cleanup existing files
-    file:
-      path: /etc/kubernetes
-      state: absent
-    when: node_type == "worker"
-
+  
   - name: Run kubeadm join on worker node
     shell: '{{_kadm_token.stdout}}'
     when: node_type == "worker"

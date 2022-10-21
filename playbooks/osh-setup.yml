@@ -14,6 +14,7 @@
         dest: /opt/openstack-helm
     virt_type: kvm
     k8s_nodes_list_file: /tmp/k8s-nodes-list.yml
+    multinode_deployment: false
 
   pre_tasks:
   - assert:
@@ -25,7 +26,6 @@
   tasks:
   - name: Install google cloud public signing key
     shell: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-#    shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
 
   - name: Add kubernetes apt key
     shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
@@ -120,7 +120,21 @@
       line: 'kubernetes_network_default_device: {{_default_iface.stdout}}'
       state: present
 
+  - name: Install docker packages
+    apt:
+      name:
+        - docker-ce
+        - docker-ce-cli
+        - docker-ce-rootless-extras
+        - docker-scan-plugin
+        - docker.io
+      update_cache: yes
+      state: latest
+
   - name: Update openstack-helm-infra/tools/gate/devel/start.sh to start kubeadm based installation
     shell: sed -i -e 's/deploy-k8s/deploy-k8s-kubeadm/g' tools/gate/devel/start.sh
     args:
       chdir: /opt/openstack-helm-infra
+    when: multinode_deployment|bool
+
+
