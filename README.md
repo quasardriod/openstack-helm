@@ -14,6 +14,7 @@ Complete prerequisites of K8s machines for the easy deployment of k8s and openst
 - Install Google Cloud repo GPG Key
 - Generate inventory for OSH multinode deployment
 - Add new worker node to cluster deployed using kubeadm
+- Automatically skip already added worker nodes on running `./add-worker.sh`
 
 ## Implementation
 
