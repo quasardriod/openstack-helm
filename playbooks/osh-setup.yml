@@ -26,7 +26,7 @@
 
   tasks:
   - name: Generate ssh keypair on localhost for OSH
-    openssh_keypair:
+    community.crypto.openssh_keypair:
         path: "/tmp/{{ssh_key_pair}}"
         type: rsa
         size: 4096
@@ -57,7 +57,7 @@
     when: node_type == "master"
 
   - name: Install public key on worker nodes
-    authorized_key:
+    ansible.posix.authorized_key:
       user: "{{ansible_user}}"
       state: present
       key: "{{lookup('file', '/tmp/{{ssh_key_pair}}.pub')}}"

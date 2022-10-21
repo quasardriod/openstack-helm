@@ -5,6 +5,11 @@ MULTINODE=true
 cd roles && git pull
 cd ../
 
+echo "Installing ansible collections"
+ansible-galaxy collection install community.crypto
+ansible-galaxy collection install ansible.posix
+
+echo
 echo "Running hosts-setup.yml playbook" && sleep 5
 ansible-playbook -i inventory playbooks/hosts-setup.yml
 [ $? != 0 ] && echo "Hosts pre-config failed" && exit 1
