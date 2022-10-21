@@ -63,7 +63,7 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ./multinode.sh
 ```
 
-4. Login in k8s master and run below commands[source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html). This step will deploy only k8s master.
+4. Login in k8s master and run below commands [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html). These commands will deploy only k8s master.
 
 ```bash
 cd /opt/openstack-helm-infra
