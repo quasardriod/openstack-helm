@@ -73,6 +73,7 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
 4. Login in k8s master and run below commands [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html). These commands will deploy only k8s master.
+	- Run command as `ansible_user` in inventory. Do not run as root.
 
 ```bash
 cd /opt/openstack-helm-infra
