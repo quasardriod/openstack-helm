@@ -6,92 +6,113 @@
   #any_errors_fatal: true
 
   pre_tasks:
-  - name: Create dirs in "{{lookup('env', 'HOME')}}/" on localhost
-    file:
-      path: "{{item}}"
-      state: directory
-    run_once: true
-    become: false
-    delegate_to: localhost
-    with_items:
-      - "{{lookup('env', 'HOME')}}/.local/bin/"
-      - "{{lookup('env', 'HOME')}}/.kube"
+  #- name: Create dirs in "{{lookup('env', 'HOME')}}/" on localhost
+  #  file:
+  #    path: "{{item}}"
+  #    state: directory
+  #  run_once: true
+  #  become: false
+  #  delegate_to: localhost
+  #  with_items:
+  #    - "{{lookup('env', 'HOME')}}/.local/bin/"
+  #    - "{{lookup('env', 'HOME')}}/.kube"
 
-  - name: Check kubectl on localhost
-    stat: 
-      path: "{{lookup('env', 'HOME')}}/.local/bin/kubectl"
-    register: _kctl_local
-    run_once: true
-    delegate_to: localhost
-    become: false
+  #- name: Check kubectl on localhost
+  #  stat: 
+  #    path: "{{lookup('env', 'HOME')}}/.local/bin/kubectl"
+  #  register: _kctl_local
+  #  run_once: true
+  #  delegate_to: localhost
+  #  become: false
 
-  - name: Get kubectl version from master
-    shell: kubectl version|tr ',' '\n'|egrep GitVersion|head -1|cut -d':' -f2|xargs
-    register: _kubectl_v
-    run_once: true
-    when: not _kctl_local.stat.exists and node_type == "master"
+  #- name: Get kubectl version from master
+  #  shell: kubectl version|tr ',' '\n'|egrep GitVersion|head -1|cut -d':' -f2|xargs
+  #  register: _kubectl_v
+  #  run_once: true
+  #  when: not _kctl_local.stat.exists and node_type == "master"
       
-  - name: Download kubectl binary on localhost
-    get_url:
-      url: "https://dl.k8s.io/release/{{_kubectl_v.stdout}}/bin/linux/amd64/kubectl"
-      dest: "{{lookup('env', 'HOME')}}/.local/bin/"
-      mode: 0755
-    delegate_to: localhost
-    become: false
-    run_once: true
-    when: not _kctl_local.stat.exists
+  #- name: Download kubectl binary on localhost
+  #  get_url:
+  #    url: "https://dl.k8s.io/release/{{_kubectl_v.stdout}}/bin/linux/amd64/kubectl"
+  #    dest: "{{lookup('env', 'HOME')}}/.local/bin/"
+  #    mode: 0755
+  #  delegate_to: localhost
+  #  become: false
+  #  run_once: true
+  #  when: not _kctl_local.stat.exists
 
-  - name: Fetch kube config from master to localhost
-    fetch:
-      src: "/home/{{ansible_user}}/.kube/config"
-      dest: "{{lookup('env', 'HOME')}}/.kube/"
-      flat: yes
-    when: node_type == "master"
-    become: false
-    run_once: true
+  #- name: Fetch kube config from master to localhost
+  #  fetch:
+  #    src: "/home/{{ansible_user}}/.kube/config"
+  #    dest: "{{lookup('env', 'HOME')}}/.kube/"
+  #    flat: yes
+  #  when: node_type == "master"
+  #  become: false
+  #  run_once: true
      
   - name: Remove /tmp/node-status.yml
     file:
       path: /tmp/node-status.yml
       state: absent
-    delegate_to: localhost
     become: false
-    run_once: true
+    when: node_type == "master"
 
-  - name: Create /tmp/node-status.yml
-    lineinfile:
-      path: /tmp/node-status.yml
-      line: 'node_status:'
-      create: yes
-    delegate_to: localhost
-    become: false
-    run_once: true
- 
-  - name: List cluster nodes
+  - name: Append cluster nodes status in /tmp/node-status.yml
     shell: |
-      if kubectl get nodes --field-selector metadata.name={{inventory_hostname}}|egrep Ready;then
-        echo "  - host: {{inventory_hostname}}" >> /tmp/node-status.yml
-        echo "    ready: true" >> /tmp/node-status.yml
-      else
-        echo "  - host: {{inventory_hostname}}" >> /tmp/node-status.yml
-        echo "    ready: false" >> /tmp/node-status.yml
-      fi
-    delegate_to: localhost
+      [ -f /tmp/node-status.yml ] && echo "/tmp/node-status.yml already exists" && exit 1
+      echo "nodes_list:" > /tmp/node-status.yml
+      for n in $(kubectl get nodes|awk '{print $1}'|egrep -v NAME);do
+        echo "  - $n" >> /tmp/node-status.yml
+      done
+      echo >> /tmp/node-status.yml
+      echo "nodes_status:" >> /tmp/node-status.yml
+      
+      for n in $(kubectl get nodes|awk '{print $1}'|egrep -v NAME);do
+        if kubectl get nodes --field-selector metadata.name=$n|egrep Ready;then
+          echo "  - host: {{inventory_hostname}}" >> /tmp/node-status.yml
+          echo "    ready: true" >> /tmp/node-status.yml
+        else
+          echo "  - host: {{inventory_hostname}}" >> /tmp/node-status.yml
+          echo "    ready: false" >> /tmp/node-status.yml
+        fi
+      done
     become: false
+    when: node_type == "master"
+    args:
+      chdir: "/home/{{ansible_user}}"
+
+  - name: Fetch /tmp/node-status.yml from master
+    fetch:
+      src: /tmp/node-status.yml
+      dest: /tmp/
+      flat: yes
+    become: false
+    when: node_type == "master"
 
   - name: Include vars from /tmp/node-status.yml
     include_vars:
       file: /tmp/node-status.yml
 
   - debug:
-      var: node_status  
+      var: nodes_list 
     run_once: true
 
-  - name: Set fact kube_node_status
+  - debug:
+      var: nodes_status  
+    run_once: true
+
+  - name: Set fact kube_node_status for existing worker nodes
     set_fact:
       kube_node_status: "{{item.ready}}"
-    with_items: "{{node_status}}"
+    with_items: "{{nodes_status}}"
     when: item.host == inventory_hostname
+
+  - name: Set fact kube_node_status for new worker nodes
+    set_fact:
+      kube_node_status: "false"
+    when: 
+      - node_type == "worker"
+      - inventory_hostname not in nodes_list
   
   - debug:
       var: kube_node_status
@@ -105,6 +126,23 @@
   - name: Abort playbook if no worker node left to add in cluster
     meta: end_host
     when: ansible_play_hosts is not search('worker')
+
+  - name: Added and append new_nodes var in /tmp/node-status.yml
+    shell: |
+      echo >> /tmp/node-status.yml
+      echo "new_nodes:" >> /tmp/node-status.yml
+      echo "  - {{inventory_hostname}}" >> /tmp/node-status.yml
+    when: node_type == "worker"
+    delegate_to: localhost
+    become: false
+    
+  - name: Include vars from /tmp/node-status.yml
+    include_vars:
+      file: /tmp/node-status.yml
+
+  - debug:
+      var: new_nodes
+    run_once: true
 
   tasks:
   - block:
@@ -219,21 +257,29 @@
     when: node_type == "worker"
 
   - name: Check Ready status of new added node
-    shell: kubectl get nodes --field-selector metadata.name={{inventory_hostname}}|egrep Ready
+    shell: kubectl get nodes --field-selector metadata.name={{item}}|egrep -w Ready
     register: _node_ready
     retries: 5
     delay: 10
     until: _node_ready.rc == 0
-    delegate_to: localhost
-    when: inventory_hostname is search('worker')
+    when: node_type == "master"
     become: false
+    with_items: "{{new_nodes}}"
 
   - name: Set Worker nodes label to worker
-    shell: kubectl label node {{inventory_hostname}} node-role.kubernetes.io/worker=worker
-    delegate_to: localhost
-    when: inventory_hostname is search('worker')
+    shell: kubectl label node {{item}} node-role.kubernetes.io/worker=worker
+    when: node_type == "master"
     become: false
+    with_items: "{{new_nodes}}"
     
+  - name: Get nodes list
+    shell: kubectl get nodes
+    when: node_type == "master"
+    become: false
+    register: _node_list
+
   - debug:
-      msg: "Added {{inventory_hostname}} successfully in kubernetes cluster"
-    when: node_type == "worker"
+      msg:
+        - "Kubernetes cluster nodes list:"
+        - "{{_node_list.stdout_lines}}"
+    run_once: true

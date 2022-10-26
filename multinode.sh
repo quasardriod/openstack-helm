@@ -2,6 +2,20 @@
 
 MULTINODE=true
 
+if ! which pip3 > /dev/null 2>&1;then
+	if egrep -q "ID=ubuntu" /etc/os-release;then
+		sudo apt update
+		sudo apt install python3-pip -y
+	fi
+fi
+
+if ! which ansible-galaxy > /dev/null 2>&1;then
+	if egrep -q "ID=ubuntu" /etc/os-release;then
+		sudo apt update
+		sudo apt install ansible -y
+	fi
+fi
+
 cd roles && git pull
 cd ../
 

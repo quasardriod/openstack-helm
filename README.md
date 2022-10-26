@@ -15,6 +15,9 @@ Setup system pre-requisites of machines for the easy deployment of k8s and opens
 	- memory: 4GB
 	- Packages:
 		- ansible-core 2.12+
+		- ansible-galaxy
+		- python3
+		- pip3
 
 - K8s master:
 	- cpu: 6+
