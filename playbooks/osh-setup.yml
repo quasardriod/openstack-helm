@@ -103,14 +103,14 @@
       state: absent
     with_items: "{{osh_repos}}"
     
-  - name: clone openstack helm code
-    shell: git clone {{item.repo}} {{item.dest}}
-    with_items: "{{osh_repos}}"
-    register: _clone
-    retries: 3
-    delay: 5
-    until: _clone is success
-    become: false
+#  - name: clone openstack helm code
+#    shell: git clone {{item.repo}} {{item.dest}}
+#    with_items: "{{osh_repos}}"
+#    register: _clone
+#    retries: 3
+#    delay: 5
+#    until: _clone is success
+#    become: false
 
   - name: Set hostname
     hostname:
@@ -146,6 +146,14 @@
   - name: Load vars from {{k8s_nodes_list_file}}
     include_vars:
       file: "{{k8s_nodes_list_file}}"
+
+  - name: Sync osh upstream code to target nodes
+    synchronize:
+      src: "{{item}}"
+      dest: "/opt/"
+    with_items:
+      - openstack-helm
+      - openstack-helm-infra
 
   - name: Template out inventory for kubenodes setup
     template:
