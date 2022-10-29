@@ -178,9 +178,3 @@
       regexp: '^kubernetes_network_default_device'
       line: 'kubernetes_network_default_device: {{_default_iface.stdout}}'
       state: present
-
-  - name: Update openstack-helm-infra/tools/gate/devel/start.sh to start kubeadm based installation
-    shell: sed -i -e 's/deploy-k8s/deploy-k8s-kubeadm/g' tools/gate/devel/start.sh
-    args:
-      chdir: /opt/openstack-helm-infra
-    when: multinode_deployment|bool

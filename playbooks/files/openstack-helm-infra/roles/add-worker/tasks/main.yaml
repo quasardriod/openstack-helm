@@ -1,0 +1,146 @@
+---
+
+- name: Ensure br_netfilter is enabled on system startup
+  lineinfile:
+    path: '/etc/modules-load.d/br_netfilter.conf'
+    regexp: '^br_netfilter$'
+    line: 'br_netfilter'
+    state: present
+    create: yes
+  
+- name: Enable br_netfilter on runtime
+  shell: modprobe br_netfilter
+
+- name: Disable swap
+  shell: swapoff -a
+
+- name: Create /etc/apt/keyrings
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+    
+- name: Get stat of /etc/apt/keyrings/docker.gpg
+  stat:
+    path: /etc/apt/keyrings/docker.gpg
+  register: _docker_gpg
+
+- name: Install Docker GPG key
+  shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  when: not _docker_gpg.stat.exists
+
+- name: Setup docker reposiroty
+  shell: |
+        echo  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+- name: Install docker packages
+  apt:
+    name:
+      - docker.io
+      - containerd 
+    autoremove: yes
+    update_cache: yes
+    state: latest
+
+- name: swapoff
+  command: swapoff -a
+
+- name: Copy docker daemon json on worker nodes
+  copy:
+    src: /etc/docker/daemon.json
+    dest: /etc/docker/
+    mode: 0644
+    owner: root
+    group: root
+
+- name: Get kubeadm version from master
+  shell: apt list -a kubeadm|awk '/now/{print $2}'
+  register: _kadm_version
+  connection: local
+  run_once: true
+
+- debug:
+    var: _kadm_version.stdout
+  connection: local
+  run_once: true
+
+- name: Install google cloud public signing key
+  shell: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+- name: Add kubernetes apt key
+  shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+
+- name: Install kube packages on worker nodes
+  apt: 
+    name:
+      - "{{item}}={{_kadm_version.stdout}}"
+    state: present
+    update_cache: yes
+    allow_downgrade: yes
+  with_items:
+    - kubeadm
+    - kubelet
+    
+#- name: Cleanup existing files
+#  file:
+#    path: /etc/kubernetes
+#    state: absent
+
+- name: Stop kubelet
+  systemd:
+    name: kubelet
+    state: stopped
+    
+- name: Restart docker
+  systemd:
+    name: docker
+    state: restarted
+
+- name: Generate token
+  shell: 'kubeadm token create --print-join-command'
+  register: _kadm_token
+  connection: local
+  run_once: true
+
+- debug:
+    var: _kadm_token.stdout
+  connection: local
+  run_once: true
+
+- name: Run kubeadm join on worker node
+  shell: '{{_kadm_token.stdout}}'
+
+- name: Check Ready status of new added node
+  shell: kubectl get nodes --field-selector metadata.name={{item}}|egrep -w Ready
+  register: _node_ready
+  retries: 10
+  delay: 30
+  until: _node_ready.rc == 0
+  become: false
+  with_items: "{{play_hosts}}"
+  connection: local
+  run_once: true
+
+- name: Set Worker nodes label to worker
+  shell: kubectl label node {{item}} node-role.kubernetes.io/worker=worker
+  become: false
+  with_items: "{{play_hosts}}"
+  connection: local
+  run_once: true
+    
+- name: Get nodes list
+  shell: kubectl get nodes
+  become: false
+  register: _node_list
+  connection: local
+  run_once: true
+
+- debug:
+    msg:
+      - "Kubernetes cluster nodes list:"
+      - "{{_node_list.stdout_lines}}"
+  connection: local
+  run_once: true

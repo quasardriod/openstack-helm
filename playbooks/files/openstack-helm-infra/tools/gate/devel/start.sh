@@ -67,7 +67,15 @@ if [ "x${DEPLOY}" == "xsetup-host" ]; then
   PLAYBOOKS="osh-infra-deploy-docker"
 elif [ "x${DEPLOY}" == "xk8s" ]; then
   ${WORK_DIR}/tools/deployment/common/000-install-packages.sh
-  ${WORK_DIR}/tools/gate/deploy-k8s.sh
+  if [ "x${MODE}" == "xmultinode" ]; then
+    ${WORK_DIR}/tools/gate/deploy-k8s-kubeadm.sh
+    ansible-playbook ${WORK_DIR}/playbooks/osh-infra-add-worker.yaml \
+      -i ${INVENTORY} \
+      --extra-vars=@${VARS} \
+      --extra-vars "work_dir=${WORK_DIR}"
+  else
+    ${WORK_DIR}/tools/gate/deploy-k8s.sh
+  fi
   exit 0
 elif [ "x${DEPLOY}" == "xlogs" ]; then
   PLAYBOOKS="osh-infra-collect-logs"
