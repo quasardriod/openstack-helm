@@ -55,7 +55,9 @@ git clone --recurse-submodules https://github.com/quasarenergy/openstack-helm.gi
 
 Follow below instructions and execute commands on ansible controller.
 
-#### 1. Update K8s node information and auth creds in inventory. `node_type` in above snippet is K8S node type
+#### 1. Inventory and group vars:
+
+- Update K8s node information and auth creds in `inventory/hosts`. `node_type` in above snippet is K8S node type.
 
 ```
 [primary]
@@ -64,7 +66,6 @@ master ansible_host=192.168.10.236 node_type=master
 [nodes]
 worker1 ansible_host=192.168.10.235 node_type=worker
 
-
 [all:vars]
 ansible_user=ubuntu
 ansible_password=redhat
@@ -72,33 +73,46 @@ ansible_become_password=redhat
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
-#### 2. Configure hosts and following changes will be made on target machines:
-- Static IP configuration to target machines
-- Disable BIOS dev name
-- Disable IPv6
-- Configure password less sudo for current user on target machines
+#### 2. Configure hosts following changes will be made on target machines:
+- If K8s nodes are VMs and running on KVM hypervisor export `KVM=true`:
 
 ```bash
+# export KVM if target nodes are KVM guests
+unset KVM
+export KVM=true
+
 ./setup.sh -p
 ```
 
-#### 3. Prepare nodes for kubeadm deployment and following changes will be made on target machines:
-- Setup ssh keys
-- Configure system to use google clouds packages repo
-- Enable `br_netfilter` kernel module
-- Set hostname
-- Update /etc/hosts
-- Sync upstream `openstack-helm` and `openstack-helm-infra` code to target hosts in /opt
-- Update `multinode-inventory.yaml` with the current ansible inventory
-- Update `multinode-vars.yaml`
+- **NOTE:** Following changes will be made on target machines:
+```
+* Static IP configuration to target machines
+* Disable BIOS dev name
+* Disable IPv6
+* Configure password less sudo for current user on target machines
+```
+
+#### 3. Prepare nodes for kubeadm deployment:
 
 ```bash
 ./setup.sh -s
 ```
 
+- **NOTE:** Following changes will be made on target machines:
+```
+* Setup ssh keys
+* Configure system to use google clouds packages repo
+* Enable `br_netfilter` kernel module
+* Set hostname
+* Update /etc/hosts
+* Sync upstream `openstack-helm` and `openstack-helm-infra` code to target hosts in /opt
+* Update `multinode-inventory.yaml` with the current ansible inventory
+* Update `multinode-vars.yaml`
+```
+
 #### 4. Deploy kubeadm cluster and add worker nodes:
 - **NOTE**
-  * Below make commands calls `openstack-helm-infra/tools/gate/devel/start.sh` with the arguments passed at position $1 and $2 and deploys only k8s master -> upstream code functionality.
+  * `make` commands calls `openstack-helm-infra/tools/gate/devel/start.sh` with the arguments passed at position $1 and $2 and deploys only k8s master -> upstream code functionality.
   * I have tweaked `openstack-helm-infra/tools/gate/devel/start.sh` to call a playbook on running `make dev-deploy k8s multinode` command and add worker node in cluster, after installing kubernetes cluster on master.
   * To achieve this functionality I have added:
 ```

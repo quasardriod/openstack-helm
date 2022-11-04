@@ -1,0 +1,21 @@
+---
+
+- hosts: primary
+  gather_facts: false
+
+  tasks:
+  - debug:
+      msg: "{{lookup('env', 'PWD')}}"
+
+
+  - name: fetch "multinode-inventory.yaml" on localhost
+    fetch:
+      src: /opt/openstack-helm-infra/tools/gate/devel/multinode-inventory.yaml
+      dest: "{{lookup('env', 'PWD')}}/playbooks/files/openstack-helm/tools/gate/"
+      flat: yes
+
+  - name: fetch "multinode-vars.yaml" on localhost
+    fetch:
+      src: /opt/openstack-helm-infra/tools/gate/devel/multinode-vars.yaml
+      dest: "{{lookup('env', 'PWD')}}/playbooks/files/openstack-helm/tools/gate/"
+      flat: yes

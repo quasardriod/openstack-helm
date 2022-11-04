@@ -3,7 +3,7 @@
 - hosts: all
   gather_facts: true
   become: true
-  
+
   vars:
     osh_repos:
       - name: infra
@@ -18,26 +18,21 @@
   pre_tasks:
   - assert:
       that:
-        - ansible_distribution == "Ubuntu" 
+        - ansible_distribution == "Ubuntu"
         - ansible_distribution_version == "20.04"
         - ansible_user == "ubuntu"
 
   tasks:
-
-  - name: Set static IP
+  - name: Include os-tuning role
     include_role:
-      name: kvm
-      tasks_from: static-ip.yml
+      name: os-tuning
+      tasks_from: main.yml
 
-  - name: Disable BIOS DEV name for KVM machines
+  - name: Enable virtual console for KVM guests
     include_role:
-      name: kvm
-      tasks_from: biosdevname.yml
-
-  - name: Disable ipv6
-    include_role:
-      name: kvm
-      tasks_from: disable-ipv6.yml
+      name: kvm-guest
+      tasks_from: vconsole.yml
+    when: kvm|bool
 
   - name: Set NOPASSWD for {{ansible_user}}
     lineinfile:
