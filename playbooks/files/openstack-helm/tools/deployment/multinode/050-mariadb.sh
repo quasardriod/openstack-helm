@@ -14,11 +14,12 @@
 
 set -xe
 
+: ${REPLICA:=3}
 #NOTE: Deploy command
 tee /tmp/mariadb.yaml << EOF
 pod:
   replicas:
-    server: 3
+    server: $REPLICA
     ingress: 2
 EOF
 

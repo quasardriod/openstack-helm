@@ -1,0 +1,33 @@
+---
+
+- hosts: primary
+  gather_facts: true
+  become: true
+
+  vars:
+    osh_repos:
+      - name: infra
+        repo: "https://opendev.org/openstack/openstack-helm-infra.git"
+        dest: /opt/openstack-helm-infra
+      - name: component
+        repo: "https://opendev.org/openstack/openstack-helm.git"
+        dest: /opt/openstack-helm
+    target_dir: /opt/openstack-helm-infra
+
+  pre_tasks:
+  - assert:
+      that:
+        - ansible_distribution == "Ubuntu"
+        - ansible_distribution_version == "20.04"
+        - ansible_user == "ubuntu"
+
+  tasks:
+  - name: Configure hosts for mutinode deployment
+    shell: make dev-deploy setup-host multinode
+    args:
+      chdir: {{target_dir}}
+
+  - name: Install kubeadm
+    shell: make dev-deploy k8s multinode
+    args:
+      chdir: {{target_dir}}
