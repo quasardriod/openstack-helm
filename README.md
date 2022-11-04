@@ -79,8 +79,8 @@ ansible_become_password=redhat
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
-2. Host configuration, following changes will be made on target machines:
-> * Static IP configuration to target machines
+2. Configure hosts and following changes will be made on target machines:
+  * Static IP configuration to target machines
   * Disable BIOS dev name
 	* Disable IPv6
 	* Configure password less sudo for current user on target machines
@@ -89,8 +89,8 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ./setup.sh -p
 ```
 
-3. Prepare nodes for kubeadm deployment, following changes will be made on target machines:
-> * Setup ssh keys
+3. Prepare nodes for kubeadm deployment and following changes will be made on target machines:
+  * Setup ssh keys
   * Configure system to use google clouds packages repo
 	* Enable `br_netfilter` kernel module
 	* Set hostname
@@ -105,7 +105,7 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 4. Deploy kubeadm cluster and add worker nodes.
 
-> Note:
+  **Note:**
 	* Below make commands calls `openstack-helm-infra/tools/gate/devel/start.sh` with the arguments passed at position $1 and $2 and deploys only k8s master -> upstream code functionality.
 	* I have tweaked `openstack-helm-infra/tools/gate/devel/start.sh` to call a playbook on running `make dev-deploy k8s multinode` command and add worker node in cluster, after installing kubernetes cluster on master.
 	* To achieve this functionality I have added:
