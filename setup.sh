@@ -20,6 +20,7 @@ anisble_setup(){
   pip3 install ansible-core --user
 
   git submodule update --init
+  git submodule update --remote --merge
   
   echo "Installing ansible collections"
   ansible-galaxy collection install community.crypto
