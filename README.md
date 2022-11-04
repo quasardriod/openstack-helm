@@ -58,8 +58,12 @@ Follow below instructions and execute commands on ansible controller.
 ### 1. Update K8s node information and auth creds in inventory. `node_type` in above snippet is K8S node type
 
 ```
-master ansible_host=192.168.10.235 node_type=master
-worker1 ansible_host=192.168.10.17 node_type=worker
+[primary]
+master ansible_host=192.168.10.236 node_type=master
+
+[nodes]
+worker1 ansible_host=192.168.10.235 node_type=worker
+
 
 [all:vars]
 ansible_user=ubuntu
@@ -69,24 +73,24 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
 ### 2. Configure hosts and following changes will be made on target machines:
-  * Static IP configuration to target machines
-	* Disable BIOS dev name
-	* Disable IPv6
-	* Configure password less sudo for current user on target machines
+- Static IP configuration to target machines
+- Disable BIOS dev name
+- Disable IPv6
+- Configure password less sudo for current user on target machines
 
 ```bash
 ./setup.sh -p
 ```
 
 ### 3. Prepare nodes for kubeadm deployment and following changes will be made on target machines:
-	* Setup ssh keys
-	* Configure system to use google clouds packages repo
-	* Enable `br_netfilter` kernel module
-	* Set hostname
-	* Update /etc/hosts
-	* Sync upstream `openstack-helm` and `openstack-helm-infra` code to target hosts in /opt
-	* Update `multinode-inventory.yaml` with the current ansible inventory
-	* Update `multinode-vars.yaml`
+- Setup ssh keys
+- Configure system to use google clouds packages repo
+- Enable `br_netfilter` kernel module
+- Set hostname
+- Update /etc/hosts
+- Sync upstream `openstack-helm` and `openstack-helm-infra` code to target hosts in /opt
+- Update `multinode-inventory.yaml` with the current ansible inventory
+- Update `multinode-vars.yaml`
 
 ```bash
 ./setup.sh -s
