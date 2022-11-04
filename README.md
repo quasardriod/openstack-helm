@@ -57,7 +57,8 @@ Follow below instructions and execute commands on ansible controller.
 
 **1. Inventory and group vars:**
 
-- Update K8s node information and auth creds in `inventory/hosts`. `node_type` in above snippet is K8S node type.
+- Update K8s node information and auth creds in `inventory/hosts`. In below snippet `node_type` K8S node type.
+- Do not remove/change group names `primary & nodes`.
 
 ```
 [primary]
