@@ -107,7 +107,7 @@ role: openstack-helm-infra/roles/add-worker
 inventory: openstack-helm-infra/tools/gate/devel/multinode-inventory.yaml
 ```
 
--  Run on ansible controller to install kubeadm cluster. This would take time to complete. If deployment fails continuously, use `make` commands to install kubernetes cluster and debug. This would install master and worker both.
+-  Run on ansible controller to install kubeadm cluster(master and worker both). This would take time to complete. If deployment fails continuously, use `make` commands to install kubernetes cluster and debug.
  ```bash
  ./setup.sh -k
  ```
