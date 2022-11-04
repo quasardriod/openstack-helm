@@ -126,6 +126,15 @@ fi
 # Install YQ
 wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64.tar.gz -O - | tar xz && sudo mv yq_linux_amd64 /usr/local/bin/yq
 
+# Enable br_netfilter kernel module
+if [ ! -f /etc/modules-load.d/br_netfilter.conf ];then
+	sudo -E tee /etc/modules-load.d/br_netfilter.conf <<EOF
+br_netfilter
+EOF
+fi
+
+sudo modprobe br_netfilter
+
 # Install kubeadm kubectl and kublet
 
 echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
