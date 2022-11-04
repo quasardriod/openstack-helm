@@ -58,7 +58,7 @@ usages(){
 }
 
 
-while getopts 'apkh' opt; do
+while getopts 'apskh' opt; do
   case $opt in
     a) anisble_setup;;
     p) pre_setup_hosts;;

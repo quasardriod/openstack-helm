@@ -107,14 +107,15 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 > Note:
 	* Below make commands calls `openstack-helm-infra/tools/gate/devel/start.sh` with the arguments passed at position $1 and $2 and deploys only k8s master -> upstream code functionality.
-	* I have tweaked `openstack-helm-infra/tools/gate/devel/start.sh` to call a playbook on running `make dev-deploy k8s multinode` command and add worker node in cluster, post kubeadm setup on master node.
+	* I have tweaked `openstack-helm-infra/tools/gate/devel/start.sh` to call a playbook on running `make dev-deploy k8s multinode` command and add worker node in cluster, after installing kubernetes cluster on master.
 	* To achieve this functionality I have added:
 	```
 	playbook: openstack-helm-infra/playbooks/osh-infra-add-worker.yaml
 	role: openstack-helm-infra/roles/add-worker
+	inventory: openstack-helm-infra/tools/gate/devel/multinode-inventory.yaml
 	```
 
-	- Login in k8s master and run below commands [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html).
+	- **Login in k8s master** and run below commands [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html).
 	> Run command as `ansible_user` in inventory. Do not run as root.
 
 ```bash
@@ -123,10 +124,11 @@ make dev-deploy setup-host multinode
 make dev-deploy k8s multinode
 ```
 
- - **OR** run command to setup kubeadm cluster on target machines and add worker
+ - **OR** run command on ansible controller to install kubeadm cluster on target machines and add worker.
 ```bash
 ./setup.sh -k
 ```
+  > This would take time to complete. If deployment fails continuously, use `make` commands to install kubernetes cluster and debug
 
 5. **OPTIONAL** Add worker node manually in existing cluster
 ```bash

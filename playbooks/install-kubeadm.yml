@@ -12,7 +12,7 @@
       - name: component
         repo: "https://opendev.org/openstack/openstack-helm.git"
         dest: /opt/openstack-helm
-    target_dir: /opt/openstack-helm-infra
+    osh_dir: /opt/openstack-helm-infra
 
   pre_tasks:
   - assert:
@@ -22,12 +22,12 @@
         - ansible_user == "ubuntu"
 
   tasks:
-  - name: Configure hosts for mutinode deployment
+  - name: Configure hosts for multinode deployment
     shell: make dev-deploy setup-host multinode
     args:
-      chdir: {{target_dir}}
+      chdir: "{{osh_dir}}"
 
   - name: Install kubeadm
     shell: make dev-deploy k8s multinode
     args:
-      chdir: {{target_dir}}
+      chdir: "{{osh_dir}}"
