@@ -15,7 +15,8 @@
     virt_type: kvm
     k8s_nodes_list_file: /tmp/k8s-nodes-list.yml
     multinode_deployment: false
-    ssh_key_pair: "osh_keys"
+    ssh_keypair: "osh_keys"
+    ssh_keypair_dir: "/var/tmp"
 
   pre_tasks:
   - assert:
@@ -27,7 +28,7 @@
   tasks:
   - name: Generate ssh keypair on localhost for OSH
     community.crypto.openssh_keypair:
-        path: "/tmp/{{ssh_key_pair}}"
+        path: "{{ssh_keypair_dir}}/{{ssh_keypair}}"
         type: rsa
         size: 4096
         state: present
@@ -38,7 +39,7 @@
   
   - name: Copy private key on master node
     copy:
-      src: "/tmp/{{ssh_key_pair}}"
+      src: "{{ssh_keypair_dir}}/{{ssh_key_pair}}"
       dest: "/home/{{ansible_user}}/.ssh/id_rsa"
       mode: 0600
       owner: "{{ansible_user}}"
@@ -48,7 +49,7 @@
 
   - name: Copy public key on master node
     copy:
-      src: "/tmp/{{ssh_key_pair}}.pub"
+      src: "{{ssh_keypair_dir}}/{{ssh_key_pair}}.pub"
       dest: "/home/{{ansible_user}}/.ssh/id_rsa.pub"
       mode: 0644
       owner: "{{ansible_user}}"
@@ -60,7 +61,7 @@
     ansible.posix.authorized_key:
       user: "{{ansible_user}}"
       state: present
-      key: "{{lookup('file', '/tmp/{{ssh_key_pair}}.pub')}}"
+      key: "{{lookup('file', '{{ssh_keypair_dir}}/{{ssh_key_pair}}.pub')}}"
     become: false
 
   - name: Create /etc/openstack-helm
@@ -70,7 +71,7 @@
 
   - name: Copy private key in /etc/openstack-helm
     copy:
-      src: "/tmp/{{ssh_key_pair}}"
+      src: "{{ssh_keypair_dir}}/{{ssh_key_pair}}"
       dest: /etc/openstack-helm/deploy-key.pem
       owner: "{{ansible_user}}"
       mode: 0600
