@@ -102,13 +102,12 @@ role: openstack-helm-infra/roles/add-worker
 inventory: openstack-helm-infra/tools/gate/devel/multinode-inventory.yaml
 ```
 
-  -  Run on ansible controller to install kubeadm cluster on target machines and add worker. This would take time to complete. If deployment fails continuously, use `make` commands to install kubernetes cluster and debug.
+-  Run on ansible controller to install kubeadm cluster on target machines and add worker. This would take time to complete. If deployment fails continuously, use `make` commands to install kubernetes cluster and debug.
  ```bash
  ./setup.sh -k
  ```
 
-	- **OR Login in k8s master** and run below commands [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html). Run command as `ansible_user` in inventory. Do not run as root.
-
+- **OR Login in k8s master** and run below commands [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html). Run command as `ansible_user` in inventory. Do not run as root.
 ```bash
 cd /opt/openstack-helm-infra
 make dev-deploy setup-host multinode
