@@ -1,5 +1,7 @@
 #!/bin/bash
 
+: ${INVENTORY:="inventory/hosts"}
+
 anisble_setup(){
   if ! which pip3 > /dev/null 2>&1;then
   	if egrep -q "ID=ubuntu" /etc/os-release;then
@@ -27,22 +29,25 @@ anisble_setup(){
 
 ##--------- Functions to install kubernetes cluster using kubeadm ----------------
 pre_setup_hosts(){
-  echo "Running hosts-setup.yml playbook" && sleep 5
-  ansible-playbook -i inventory playbooks/hosts-setup.yml
+  PLAYBOOK="playbooks/hosts-setup.yml"
+  echo "Running $PLAYBOOK" && sleep 5
+  ansible-playbook -i $INVENTORY $PLAYBOOK
   [ $? != 0 ] && echo "Hosts pre-config failed" && exit 1
 }
 
 presetup_kubeadm(){
   MULTINODE=true
-  echo "Running kubeadm-presetup.yml playbook" && sleep 5
-  ansible-playbook -i inventory playbooks/kubeadm-presetup.yml -e multinode_deployment=$MULTINODE
+  PLAYBOOK="playbooks/kubeadm-presetup.yml"
+  echo "Running $PLAYBOOK" && sleep 5
+  ansible-playbook -i $INVENTORY $PLAYBOOK -e multinode_deployment=$MULTINODE
   [ $? != 0 ] && echo "K8s pre-config failed" && exit 1
 }
 
 install_kubeadm(){
   MULTINODE=true
-  echo "Running install-kubeadm.yml playbook" && sleep 5
-  ansible-playbook -i inventory playbooks/install-kubeadm.yml -e multinode_deployment=$MULTINODE
+  PLAYBOOK="playbooks/install-kubeadm.yml"
+  echo "Running $PLAYBOOK" && sleep 5
+  ansible-playbook -i $INVENTORY $PLAYBOOK -e multinode_deployment=$MULTINODE
   [ $? != 0 ] && echo "K8s installation failed" && exit 1
 }
 
@@ -57,14 +62,13 @@ pull_inventory_to_local(){
 install_osh(){
   #pull_inventory_to_local
 
-  INVENTORY="$PWD/inventory"
   PLAYBOOK="$PWD/playbooks/files/openstack-helm/tools/gate/playbooks/multinode.yaml"
 
   cd playbooks/files/openstack-helm
   echo
   echo "PWD: $PWD"
   echo
-  echo "Running '$PLAYBOOK' playbook"
+  echo "Running $PLAYBOOK"
   ansible-playbook -i $INVENTORY $PLAYBOOK
 }
 
