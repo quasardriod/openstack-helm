@@ -2,6 +2,8 @@
 
 : ${INVENTORY:="inventory/hosts"}
 
+[ ! -f $INVENTORY ] && echo "$INVENTORY not found" && exit 1
+
 anisble_setup(){
   if ! which pip3 > /dev/null 2>&1;then
   	if egrep -q "ID=ubuntu" /etc/os-release;then
@@ -21,7 +23,7 @@ anisble_setup(){
 
   git submodule update --init
   git submodule update --remote --merge
-  
+
   echo "Installing ansible collections"
   ansible-galaxy collection install community.crypto
   ansible-galaxy collection install ansible.posix
@@ -65,8 +67,6 @@ install_osh(){
   PLAYBOOK="$PWD/playbooks/files/openstack-helm/tools/gate/playbooks/multinode.yaml"
 
   cd playbooks/files/openstack-helm
-  echo
-  echo "PWD: $PWD"
   echo
   echo "Running $PLAYBOOK"
   ansible-playbook -i $INVENTORY $PLAYBOOK
