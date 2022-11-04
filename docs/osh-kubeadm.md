@@ -65,3 +65,5 @@ make dev-deploy k8s multinode
 ```bash
 ./add-worker.sh
 ```
+
+[HOME](../README.md)

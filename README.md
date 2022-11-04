@@ -74,5 +74,4 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 **2. [Deploy Kubernetes cluster using kubeadm for Openstack Helm](docs/osh-kubeadm.md)**
 
-**3. Deploy Openstack Helm**
-TODO
+**3. [Deploy Openstack Helm](docs/osh-deploy.md)**
