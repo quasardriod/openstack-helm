@@ -64,6 +64,7 @@ pull_inventory_to_local(){
 install_osh(){
   #pull_inventory_to_local
 
+  INVENTORY="$PWD/inventory/hosts"
   PLAYBOOK="$PWD/playbooks/files/openstack-helm/tools/gate/playbooks/multinode.yaml"
 
   cd playbooks/files/openstack-helm
