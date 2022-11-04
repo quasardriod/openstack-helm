@@ -25,6 +25,7 @@ anisble_setup(){
   ansible-galaxy collection install ansible.posix
 }
 
+##--------- Functions to install kubernetes cluster using kubeadm ----------------
 pre_setup_hosts(){
   echo "Running hosts-setup.yml playbook" && sleep 5
   ansible-playbook -i inventory playbooks/hosts-setup.yml
@@ -33,11 +34,10 @@ pre_setup_hosts(){
 
 presetup_kubeadm(){
   MULTINODE=true
-  echo "Running osh-setup.yml playbook" && sleep 5
-  ansible-playbook -i inventory playbooks/osh-setup.yml -e multinode_deployment=$MULTINODE
+  echo "Running kubeadm-presetup.yml playbook" && sleep 5
+  ansible-playbook -i inventory playbooks/kubeadm-presetup.yml -e multinode_deployment=$MULTINODE
   [ $? != 0 ] && echo "K8s pre-config failed" && exit 1
 }
-
 
 install_kubeadm(){
   MULTINODE=true
@@ -46,24 +46,47 @@ install_kubeadm(){
   [ $? != 0 ] && echo "K8s installation failed" && exit 1
 }
 
+## ------------ Functions to install openstack helm --------------
+
+pull_inventory_to_local(){
+  echo
+  echo "Prepare OSH to start installation. Running playbook prepare-osh-inventory.yml"
+  ansible-playbook -i inventory playbooks/prepare-osh-inventory.yml
+}
+
+install_osh(){
+  #pull_inventory_to_local
+
+  INVENTORY="$PWD/inventory"
+  PLAYBOOK="$PWD/playbooks/files/openstack-helm/tools/gate/playbooks/multinode.yaml"
+
+  cd playbooks/files/openstack-helm
+  echo
+  echo "PWD: $PWD"
+  echo
+  echo "Running '$PLAYBOOK' playbook"
+  ansible-playbook -i $INVENTORY $PLAYBOOK
+}
+
 usages(){
 	echo
   echo " -a Install ansible and galaxy collections on localhost - MUST RUN ON FIRST SETUP"
   echo " -p Pre-setup target nodes - OS tuning"
   echo " -s Setup target nodes to deploy kubernetes using kubeadm"
   echo " -k Install kubeadm cluster"
+  echo " -o Install Openstack Helm"
   echo " -h Show this help message"
   echo
 	exit 0
 }
 
-
-while getopts 'apskh' opt; do
+while getopts 'apskoh' opt; do
   case $opt in
     a) anisble_setup;;
     p) pre_setup_hosts;;
     s) presetup_kubeadm;;
     k) install_kubeadm;;
+    o) install_osh;;
     h) usages;;
     \?|*) echo "Invalid Option: -$OPTARG" && usages;;
   esac

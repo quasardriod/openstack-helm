@@ -18,7 +18,7 @@
       container_distro_version: focal
       feature_gates: ""
     zuul_osh_relative_path: /opt/openstack-helm
-    run_task: false
+    run_task: true
     mariadb_replica: 1
 
   vars_files:
