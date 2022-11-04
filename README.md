@@ -44,18 +44,7 @@ git clone --recurse-submodules https://github.com/quasarenergy/openstack-helm.gi
 
 ## Prerequisites: Install ansible in ansible controller:
 
-- Run following commands to install ansible on localhost
-```bash
-pip3 install ansible-core --user
-```
-
-Following collections will be installed in ansible controller:
-
-```bash
-ansible-galaxy collection install community.crypto
-ansible-galaxy collection install ansible.posix
-```
-- **OR** use `setup.sh` to install ansible on localhost
+-  Install and configure ansible on localhost
 
 ```bash
 ./setup.sh -h
@@ -81,7 +70,7 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 2. Configure hosts and following changes will be made on target machines:
   * Static IP configuration to target machines
-  * Disable BIOS dev name
+	* Disable BIOS dev name
 	* Disable IPv6
 	* Configure password less sudo for current user on target machines
 
@@ -90,8 +79,8 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
 3. Prepare nodes for kubeadm deployment and following changes will be made on target machines:
-  * Setup ssh keys
-  * Configure system to use google clouds packages repo
+	* Setup ssh keys
+	* Configure system to use google clouds packages repo
 	* Enable `br_netfilter` kernel module
 	* Set hostname
 	* Update /etc/hosts
@@ -115,20 +104,18 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 	inventory: openstack-helm-infra/tools/gate/devel/multinode-inventory.yaml
 	```
 
-	- **Login in k8s master** and run below commands [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html).
-	> Run command as `ansible_user` in inventory. Do not run as root.
+	-  Run on ansible controller to install kubeadm cluster on target machines and add worker. This would take time to complete. If deployment fails continuously, use `make` commands to install kubernetes cluster and debug
+ ```bash
+ ./setup.sh -k
+ ```
+
+	- **OR Login in k8s master** and run below commands [source: Run the playbooks](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html). Run command as `ansible_user` in inventory. Do not run as root.
 
 ```bash
 cd /opt/openstack-helm-infra
 make dev-deploy setup-host multinode
 make dev-deploy k8s multinode
 ```
-
- - **OR** run command on ansible controller to install kubeadm cluster on target machines and add worker.
-```bash
-./setup.sh -k
-```
-  > This would take time to complete. If deployment fails continuously, use `make` commands to install kubernetes cluster and debug
 
 5. **OPTIONAL** Add worker node manually in existing cluster
 ```bash

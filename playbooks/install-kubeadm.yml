@@ -2,7 +2,6 @@
 
 - hosts: primary
   gather_facts: true
-  become: true
 
   vars:
     osh_repos:
@@ -31,3 +30,10 @@
     shell: make dev-deploy k8s multinode
     args:
       chdir: "{{osh_dir}}"
+
+  - name: Get nodes status
+    shell: kubectl get nodes
+    register: _nodes
+
+  - debug:
+      var: _nodes.stdout_lines
