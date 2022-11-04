@@ -72,6 +72,6 @@ ansible_password=redhat
 ansible_become_password=redhat
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
-**2. [Deploy Kubernetes cluster using kubeadm for Openstack Helm](docs/osh-kubeadm.md)**
+**2. [Deploy Kubernetes cluster using kubeadm for OpenStack Helm](docs/osh-kubeadm.md)**
 
-**3. [Deploy Openstack Helm](docs/osh-deploy.md)**
+**3. [Deploy OpenStack Helm](docs/osh-deploy.md)**
