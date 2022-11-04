@@ -19,9 +19,8 @@ anisble_setup(){
 
   pip3 install ansible-core --user
 
-  cd roles && git pull
-  cd ../
-
+  git submodule update --init
+  
   echo "Installing ansible collections"
   ansible-galaxy collection install community.crypto
   ansible-galaxy collection install ansible.posix

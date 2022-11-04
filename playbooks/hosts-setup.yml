@@ -3,7 +3,7 @@
 - hosts: all
   gather_facts: true
   become: true
-  
+
   vars:
     osh_repos:
       - name: infra
@@ -18,22 +18,21 @@
   pre_tasks:
   - assert:
       that:
-        - ansible_distribution == "Ubuntu" 
+        - ansible_distribution == "Ubuntu"
         - ansible_distribution_version == "20.04"
         - ansible_user == "ubuntu"
 
   tasks:
-
   - name: Include os-tuning role
     include_role:
       name: os-tuning
       tasks_from: main.yml
 
- - name: Enable virtual console for KVM guests
-   include_role:
-     name: kvm-guest
-     tasks_from: vconsole.yml
-   when: kvm|bool
+  - name: Enable virtual console for KVM guests
+    include_role:
+      name: kvm-guest
+      tasks_from: vconsole.yml
+    when: kvm|bool
 
   - name: Set NOPASSWD for {{ansible_user}}
     lineinfile:
