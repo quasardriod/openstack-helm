@@ -3,16 +3,15 @@
 - name: Check minikube installed k8s cluster
   command: minikube status|egrep -q "^type:\sControl\sPlane"
   register: _minik_status
-
-- meta: end_play
-  when: _minik_status.rc != 0
+  ignore_errors: true
 
 - name: Uninstall k8s cluster
   command: minikube delete
+  when: _minik_status.rc == 0
 
 - name: Remove files
   file:
-    path: "{{}}"
+    path: "{{item}}"
     state: absent
   with_items:
     - /var/lib/minikube
@@ -21,6 +20,12 @@
     - /tmp/mysql-data
     - "{{ansible_env.HOME}}/openstack-helm"
     - "{{ansible_env.HOME}}/openstack-helm-infra"
+  when: _minik_status.rc == 0
+
+- name: Remove additional files
+  file:
+    path: "{{item}}"
+    state: absent
   with_fileglob:
     - "/etc/placement*"
     - "/tmp/placement*"
@@ -30,21 +35,25 @@
     - "/var/lib/neutron*"
     - "/tmp/neutron*"
     - "/etc/neutron*"
+  when: _minik_status.rc == 0
 
 - name: Remove 'minikube' entry from /etc/hosts
   lineinfile:
     path: /etc/hosts
     regexp: '*minikube*'
     state: absent
+  when: _minik_status.rc == 0
 
 - name: Remove 'svc.cluster.local' from /etc/resolv.conf
   lineinfile:
     path: /etc/resolv.conf
     regexp: '*svc.cluster.local*'
     state: absent
+  when: _minik_status.rc == 0
 
 - name: Remove 'nameserver 10.96.0.10' from /etc/resolv.conf
   lineinfile:
     path: /etc/resolv.conf
     regexp: '^nameserver\s10.96.0.10'
     state: absent
+  when: _minik_status.rc == 0
