@@ -38,26 +38,26 @@ anisble_setup(){
 pre_setup_hosts(){
   set_deployment_env
   PLAYBOOK="playbooks/hosts-setup.yml"
-  echo "Running $PLAYBOOK" && sleep 5
+  printf "\n-> Running %s\n" "$PLAYBOOK"
   ansible-playbook -i $INVENTORY $PLAYBOOK
   [ $? != 0 ] && echo "Hosts pre-config failed" && exit 1
 }
 
 presetup_kubeadm(){
-  MULTINODE=true
+  export MULTINODE=true
   set_deployment_env
   PLAYBOOK="playbooks/kubeadm-presetup.yml"
-  echo "Running $PLAYBOOK" && sleep 5
+  printf "\n-> Running %s\n" "$PLAYBOOK"
   ansible-playbook -i $INVENTORY $PLAYBOOK -e multinode_deployment=$MULTINODE
   [ $? != 0 ] && echo "K8s pre-config failed" && exit 1
 }
 
 install_kubeadm(){
-  MULTINODE=true
+  export MULTINODE=true
   set_deployment_env
   [ $MULTINODE != "true" ] && echo "MULTINODE is not true, check MULTINODE env var" && exit 1
   PLAYBOOK="playbooks/install-kubeadm.yml"
-  echo "Running $PLAYBOOK" && sleep 5
+  printf "\n-> Running %s\n" "$PLAYBOOK"
   ansible-playbook -i $INVENTORY $PLAYBOOK -e multinode_deployment=$MULTINODE
   [ $? != 0 ] && echo "K8s installation failed" && exit 1
 }
@@ -65,23 +65,29 @@ install_kubeadm(){
 ## ------------ Functions to install openstack helm --------------
 
 pull_inventory_to_local(){
-  echo
-  echo "Prepare OSH to start installation. Running playbook prepare-osh-inventory.yml"
+  printf "\n-> Prepare OSH to start installation. Running playbook prepare-osh-inventory.yml"
   ansible-playbook -i inventory playbooks/prepare-osh-inventory.yml
 }
 
 install_osh(){
   #pull_inventory_to_local
-  [ $MULTINODE != "true" ] && echo "MULTINODE is not true, check MULTINODE env var" && exit 1
+  export MULTINODE=true
   INVENTORY="$PWD/inventory/hosts"
   PLAYBOOK="$PWD/playbooks/files/openstack-helm/tools/gate/playbooks/multinode.yaml"
 
   cd playbooks/files/openstack-helm
-  echo
-  echo "Running $PLAYBOOK"
+  printf "\n-> Running %s\n" "$PLAYBOOK"
   ansible-playbook -i $INVENTORY $PLAYBOOK
 }
 
+minikube(){
+  export MULTINODE=false
+  set_deployment_env
+  PLAYBOOK="playbooks/minikube.yml"
+  printf "\n -> Running %s\n" "$PLAYBOOK"
+
+  ansible-playbook -i $INVENTORY $PLAYBOOK
+}
 usages(){
 	echo
   echo " -a Install ansible and galaxy collections on localhost - MUST RUN ON FIRST SETUP"
@@ -90,17 +96,19 @@ usages(){
   echo " -k Install kubeadm cluster"
   echo " -o Install Openstack Helm"
   echo " -h Show this help message"
+  echo " -m Install Minikube + OpenStack Helm"
   echo
 	exit 0
 }
 
-while getopts 'apskoh' opt; do
+while getopts 'apskohm' opt; do
   case $opt in
     a) anisble_setup;;
     p) pre_setup_hosts;;
     s) presetup_kubeadm;;
     k) install_kubeadm;;
     o) install_osh;;
+    m) minikube;;
     h) usages;;
     \?|*) echo "Invalid Option: -$OPTARG" && usages;;
   esac
