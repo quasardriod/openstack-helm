@@ -20,8 +20,8 @@ ansible_password=redhat
 ansible_become_password=redhat
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
-**2. [Deploy Kubernetes cluster using kubeadm for OpenStack Helm](/osh-kubeadm.md)**
+**2. [Deploy Kubernetes cluster using kubeadm for OpenStack Helm](./osh-kubeadm.md)**
 
-**3. [Deploy OpenStack Helm](/osh-deploy.md)**
+**3. [Deploy OpenStack Helm](./osh-deploy.md)**
 
 [Go To Home Page](../../README.md)
