@@ -1,8 +1,13 @@
 #!/bin/bash
 
-: ${INVENTORY:="inventory/hosts"}
+set_deployment_env(){
+  [ -z $MULTINODE ] && echo "MULTINODE is null, export MULTINODE as true or false. Check doc for more information" && exit 1
+  [ $MULTINODE == "false" ] && INVENTORY="inventory/minikube.ini"
 
-[ ! -f $INVENTORY ] && echo "$INVENTORY not found" && exit 1
+  [ $MULTINODE == "true" ] && INVENTORY="inventory/hosts"
+
+  [ ! -f $INVENTORY ] && echo "$INVENTORY not found" && exit 1
+}
 
 anisble_setup(){
   if ! which pip3 > /dev/null 2>&1;then
@@ -31,6 +36,7 @@ anisble_setup(){
 
 ##--------- Functions to install kubernetes cluster using kubeadm ----------------
 pre_setup_hosts(){
+  set_deployment_env
   PLAYBOOK="playbooks/hosts-setup.yml"
   echo "Running $PLAYBOOK" && sleep 5
   ansible-playbook -i $INVENTORY $PLAYBOOK
@@ -39,6 +45,7 @@ pre_setup_hosts(){
 
 presetup_kubeadm(){
   MULTINODE=true
+  set_deployment_env
   PLAYBOOK="playbooks/kubeadm-presetup.yml"
   echo "Running $PLAYBOOK" && sleep 5
   ansible-playbook -i $INVENTORY $PLAYBOOK -e multinode_deployment=$MULTINODE
@@ -47,6 +54,8 @@ presetup_kubeadm(){
 
 install_kubeadm(){
   MULTINODE=true
+  set_deployment_env
+  [ $MULTINODE != "true" ] && echo "MULTINODE is not true, check MULTINODE env var" && exit 1
   PLAYBOOK="playbooks/install-kubeadm.yml"
   echo "Running $PLAYBOOK" && sleep 5
   ansible-playbook -i $INVENTORY $PLAYBOOK -e multinode_deployment=$MULTINODE
@@ -63,7 +72,7 @@ pull_inventory_to_local(){
 
 install_osh(){
   #pull_inventory_to_local
-
+  [ $MULTINODE != "true" ] && echo "MULTINODE is not true, check MULTINODE env var" && exit 1
   INVENTORY="$PWD/inventory/hosts"
   PLAYBOOK="$PWD/playbooks/files/openstack-helm/tools/gate/playbooks/multinode.yaml"
 

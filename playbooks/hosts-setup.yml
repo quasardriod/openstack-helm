@@ -5,15 +5,7 @@
   become: true
 
   vars:
-    osh_repos:
-      - name: infra
-        repo: "https://opendev.org/openstack/openstack-helm-infra.git"
-        dest: /opt/openstack-helm-infra
-      - name: component
-        repo: "https://opendev.org/openstack/openstack-helm.git"
-        dest: /opt/openstack-helm
-    virt_type: kvm
-    k8s_nodes_list_file: /tmp/k8s-nodes-list.yml
+    kvm: "{{lookup('env', 'KVM')|default('false')}}"
 
   pre_tasks:
   - assert:
@@ -59,5 +51,3 @@
     retries: 3
     delay: 5
     until: _install_pkg is success
-
-  

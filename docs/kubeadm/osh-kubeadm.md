@@ -1,12 +1,14 @@
 # Deploy Kubernetes cluster using kubeadm
 
-#### 1. Configure hosts following changes will be made on target machines:
+#### 1. Configure hosts:
 - If K8s nodes are VMs and running on KVM hypervisor export `KVM=true`:
 
 ```bash
 # export KVM if target nodes are KVM guests
 unset KVM
 export KVM=true
+
+export MULTINODE=true
 
 ./setup.sh -p
 ```
