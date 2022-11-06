@@ -5,7 +5,8 @@
 Setup system pre-requisites of machines for the easy deployment of k8s and openstack using opensource [openstack helm](https://docs.openstack.org/openstack-helm/latest/) project.
 
 * [Gate-Based Kubernetes](https://docs.openstack.org/openstack-helm/latest/install/kubernetes-gate.html)
-* [Multi node deployment](https://docs.openstack.org/openstack-helm/latest/install/multinode.html)
+* [Multi Node Deployment](https://docs.openstack.org/openstack-helm/latest/install/multinode.html)
+* [Single Node Deployment](https://docs.openstack.org/openstack-helm/latest/ko_KR/install/developer/kubernetes-and-common-setup.html)
 
 ## Features & changes list
 - Disable biosdevname
@@ -19,23 +20,13 @@ Setup system pre-requisites of machines for the easy deployment of k8s and opens
 ## Requirements
 
 **System Requirements:**
-- Ansible controller:
-	- cpu: 2
-	- memory: 4GB
-	- Packages:
-		- ansible-core 2.12+
-		- ansible-galaxy
-		- python3
-		- pip3
 
-- K8s master:
-	- cpu: 6+
-	- memory: 8GB+
-
-- K8s worker:
-	- cpu: 2+
-	- memory: 4GB+
-
+| Node Type          | CPU  | Memory  | Packages and tools |
+| ------------------ | ---- | ------- | ------------------ |
+| Ansible Controller | 2    | 4 GB    | ansible-core 2.12+ |
+| K8s Master         | 8+   | 10+ GB  |                    |
+| K8s Worker         | 4+   | 6+ GB   |                    |
+| Minikube Node      | 10+  | 16+ GB  |                    |
 
 ## Clone code in ansible controller
 ```bash
@@ -51,28 +42,6 @@ git clone --recurse-submodules https://github.com/quasarenergy/openstack-helm.gi
 ./setup.sh -a
 ```
 
-## Implementation
+## Deployment Methods:
 
-Follow below instructions and execute commands on ansible controller.
-
-**1. Inventory and group vars:**
-
-- Update K8s node information and auth creds in `inventory/hosts`. In below snippet `node_type` K8S node type.
-- Do not remove/change group names `primary & nodes`.
-
-```
-[primary]
-master ansible_host=192.168.10.236 node_type=master
-
-[nodes]
-worker1 ansible_host=192.168.10.235 node_type=worker
-
-[all:vars]
-ansible_user=ubuntu
-ansible_password=redhat
-ansible_become_password=redhat
-ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-```
-**2. [Deploy Kubernetes cluster using kubeadm for OpenStack Helm](docs/osh-kubeadm.md)**
-
-**3. [Deploy OpenStack Helm](docs/osh-deploy.md)**
+- ** [Multinode Kubeadm based deployment](docs/kubeadm/INDEX.md) **

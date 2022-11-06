@@ -1,4 +1,4 @@
-# Deploy Kubernetes cluster using kubeadm for Openstack Helm
+# Deploy Kubernetes cluster using kubeadm
 
 #### 1. Configure hosts following changes will be made on target machines:
 - If K8s nodes are VMs and running on KVM hypervisor export `KVM=true`:
@@ -62,4 +62,5 @@ make dev-deploy k8s multinode
 ./add-worker.sh
 ```
 
-[Go To Home Page](../README.md)
+[Previous Page](../INDEX.md)
+[Go To Home Page](../../README.md)
