@@ -45,4 +45,4 @@ git clone --recurse-submodules https://github.com/quasarenergy/openstack-helm.gi
 ## Deployment Methods:
 
 - **[Multinode Kubeadm based deployment](docs/kubeadm/INDEX.md)**
-- **[Single Node Minikube based deployment](docs/munikube/README.md)**
+- **[Single Node Minikube based deployment](docs/minikube/README.md)**
