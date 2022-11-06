@@ -10,5 +10,6 @@
   * `openstack-helm/tools/gate/playbooks/multinode.yaml` playbook has been created to install OpenStack helm
   * Current changes will install only openstack controller components.
 
-[Previous Page](../INDEX.md)
+[Previous Page](INDEX.md)
+
 [Go To Home Page](../../README.md)
