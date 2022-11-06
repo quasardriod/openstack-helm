@@ -50,7 +50,7 @@
       group: root
     become: yes
 
-  - name: Start systemd-resolved
+  - name: stop and disable systemd-resolved
     systemd:
       name: systemd-resolved
       state: stopped
