@@ -45,7 +45,7 @@
     copy:
       src: /run/systemd/resolve/resolv.conf
       dest: /etc/resolv.conf
-      remote: yes
+      remote_src: yes
       owner: root
       group: root
     become: yes
