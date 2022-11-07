@@ -34,13 +34,13 @@ git clone --recurse-submodules https://github.com/quasarenergy/openstack-helm.gi
 ```
 
 ## Prerequisites: Install ansible in ansible controller:
-
 -  Install and configure ansible on localhost
 
 ```bash
 ./setup.sh -h
 ./setup.sh -a
 ```
+<! https://devconnected.com/how-to-add-and-update-git-submodules/ >
 
 ## Deployment Methods:
 

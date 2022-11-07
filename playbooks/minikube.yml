@@ -69,3 +69,17 @@
     shell: ./tools/gate/deploy-k8s.sh
     args:
       chdir: "{{ansible_env.HOME}}/openstack-helm"
+
+  - name: Check Minikube status
+    shell: minikube status
+    register: minik_status
+
+  - debug:
+      var: minik_status.stdout_lines
+
+  - name: Check kube-system status
+    shell: kubectl get pods -A
+    register: _kube_system
+
+  - debug:
+      var: _kube_system.stdout_lines
