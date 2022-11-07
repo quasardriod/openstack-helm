@@ -4,82 +4,26 @@
   gather_facts: true
 
   vars:
+    HELM_TESTS: no
+    run_task: false
     cleanup: false
-    OSH_EXTRA_HELM_ARGS: "--timeout 20m"
-    OPENSTACK_RELEASE: 'victoria'
-    CONTAINER_DISTRO_VERSION: 'focal'
-    UPDATE_CALICO_VERSION: "true"
-    osh_repos:
-      - name: infra
-        repo: "https://opendev.org/openstack/openstack-helm-infra.git"
-        dest: "{{ansible_env.HOME}}/openstack-helm-infra"
-      - name: component
-        repo: "https://opendev.org/openstack/openstack-helm.git"
-        dest: "{{ansible_env.HOME}}/openstack-helm"
 
   tasks:
-  - include_tasks: additional/minikube-cleanup.yml
-    when: cleanup|bool
-
-  - name: Set hostname
-    hostname:
-      name: "{{inventory_hostname}}"
-      use: systemd
-    become: true
-
-  - name: Start systemd-resolved
-    systemd:
-      name: systemd-resolved
-      state: started
-    become: true
-
-  - name: Add '127.0.1.1 {{inventory_hostname}}' in /etc/hosts
-    lineinfile:
-      path: /etc/hosts
-      regexp: '^127.0.1.1'
-      line: '127.0.1.1 {{inventory_hostname}}'
-      state: present
-    become: true
-
-  - name: Copy /run/systemd/resolve/resolv.conf to /etc/resolv.conf
-    copy:
-      src: /run/systemd/resolve/resolv.conf
-      dest: /etc/resolv.conf
-      remote_src: yes
-      owner: root
-      group: root
-    become: yes
-
-  - name: stop and disable systemd-resolved
-    systemd:
-      name: systemd-resolved
-      state: stopped
-      enabled: no
-    become: true
-
-  - name: clone openstack helm code
-    shell: git clone {{item.repo}} {{item.dest}}
-    with_items: "{{osh_repos}}"
-    register: _clone
-    retries: 3
-    delay: 5
-    until: _clone is success
+  - name: Minikube Cleanup
+    include_role:
+      name: minikube
+      tasks_from: minikube-cleanup.yml
+    when:
+      - cleanup|bool
+      - run_task|bool
 
   - name: Install Minikube
-    shell: ./tools/gate/deploy-k8s.sh
-    args:
-      chdir: "{{ansible_env.HOME}}/openstack-helm"
+    include_role:
+      name: minikube
+      tasks_from: install-minikube.yml
+    when: run_task|bool
 
-  - name: Check Minikube status
-    shell: minikube status
-    register: minik_status
-
-  - debug:
-      var: minik_status.stdout_lines
-
-  - name: Check kube-system status
-    shell: kubectl get pods -A
-    register: _kube_system
-
-  - debug:
-      var: _kube_system.stdout_lines
+  - name: Install Openstack
+    include_role:
+      name: minikube
+      tasks_from: install-osp.yml

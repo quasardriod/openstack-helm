@@ -1,0 +1,21 @@
+---
+
+- name: Install Required packages
+  shell: ./tools/deployment/common/install-packages.sh
+  args:
+    chdir: "{{ansible_env.HOME}}/openstack-helm"
+
+- name: Setup Client
+  shell: ./tools/deployment/common/setup-client.sh
+  args:
+    chdir: "{{ansible_env.HOME}}/openstack-helm"
+
+- name: Install Ingress
+  shell: ./tools/deployment/component/common/ingress.sh
+  args:
+    chdir: "{{ansible_env.HOME}}/openstack-helm"
+
+- name: Install Openstack
+  shell: RUN_HELM_TESTS={{HELM_TESTS}} ./tools/deployment/component/common/openstack.sh
+  args:
+    chdir: "{{ansible_env.HOME}}/openstack-helm"

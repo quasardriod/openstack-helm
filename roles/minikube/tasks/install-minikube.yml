@@ -1,0 +1,64 @@
+---
+
+- name: Set hostname
+  hostname:
+    name: "{{inventory_hostname}}"
+    use: systemd
+  become: true
+
+- name: Start systemd-resolved
+  systemd:
+    name: systemd-resolved
+    state: started
+  become: true
+
+- name: Add '127.0.1.1 {{inventory_hostname}}' in /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^127.0.1.1'
+    line: '127.0.1.1 {{inventory_hostname}}'
+    state: present
+  become: true
+
+- name: Copy /run/systemd/resolve/resolv.conf to /etc/resolv.conf
+  copy:
+    src: /run/systemd/resolve/resolv.conf
+    dest: /etc/resolv.conf
+    remote_src: yes
+    owner: root
+    group: root
+  become: yes
+
+- name: stop and disable systemd-resolved
+  systemd:
+    name: systemd-resolved
+    state: stopped
+    enabled: no
+  become: true
+
+- name: clone openstack helm code
+  shell: git clone {{item.repo}} {{item.dest}}
+  with_items: "{{osh_repos}}"
+  register: _clone
+  retries: 3
+  delay: 5
+  until: _clone is success
+
+- name: Install Minikube
+  shell: ./tools/gate/deploy-k8s.sh
+  args:
+    chdir: "{{ansible_env.HOME}}/openstack-helm"
+
+- name: Check Minikube status
+  shell: minikube status
+  register: minik_status
+
+- debug:
+    var: minik_status.stdout_lines
+
+- name: Check kube-system status
+  shell: kubectl get pods -A
+  register: _kube_system
+
+- debug:
+    var: _kube_system.stdout_lines

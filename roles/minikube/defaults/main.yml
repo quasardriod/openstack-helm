@@ -1,0 +1,12 @@
+OSH_EXTRA_HELM_ARGS: "--timeout 20m"
+OPENSTACK_RELEASE: 'victoria'
+CONTAINER_DISTRO_VERSION: 'focal'
+UPDATE_CALICO_VERSION: "true"
+
+osh_repos:
+  - name: infra
+    repo: "https://opendev.org/openstack/openstack-helm-infra.git"
+    dest: "{{ansible_env.HOME}}/openstack-helm-infra"
+  - name: component
+    repo: "https://opendev.org/openstack/openstack-helm.git"
+    dest: "{{ansible_env.HOME}}/openstack-helm"
