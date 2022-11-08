@@ -15,10 +15,15 @@
         - ansible_user == "ubuntu"
 
   tasks:
-  - name: Include os-tuning role
+  - name: Set static IP
     include_role:
       name: os-tuning
-      tasks_from: main.yml
+      tasks_from: static-ip.yml
+
+  - name: Disable biosdevname
+    include_role:
+      name: os-tuning
+      tasks_from: biosdevname.yml
 
   - name: Enable virtual console for KVM guests
     include_role:
