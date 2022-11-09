@@ -43,6 +43,20 @@
         chdir: "{{ zuul_osh_relative_path }}"
       when: run_task|bool
 
+    - name: Update /etc/resolv.conf with code-dns IP
+      lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^nameserver\s10.96.0.10$'
+        line: 'nameserver 10.96.0.10'
+        state: present
+
+    - name: Update /etc/resolv.conf with cluster search
+      lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^search\sopenstack'
+        line: 'search openstack.svc.cluster.local svc.cluster.local cluster.local'
+        state: present
+
     - name: Deploy MariaDB
       environment: "{{ multinode_env }}"
       shell: |
