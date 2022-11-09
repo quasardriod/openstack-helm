@@ -43,6 +43,13 @@
         chdir: "{{ zuul_osh_relative_path }}"
       when: run_task|bool
 
+    - name: Stop and disable systemd-resolved
+      systemd:
+        name: systemd-resolved
+        state: stopped
+        enabled: no
+      become: true
+      
     - name: Update /etc/resolv.conf with code-dns IP
       lineinfile:
         path: /etc/resolv.conf
