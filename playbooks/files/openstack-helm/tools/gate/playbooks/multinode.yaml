@@ -57,7 +57,7 @@
         regexp: '^search\sopenstack'
         line: 'search openstack.svc.cluster.local svc.cluster.local cluster.local'
         state: present
-       become: true
+      become: true
 
     - name: Deploy MariaDB
       environment: "{{ multinode_env }}"
