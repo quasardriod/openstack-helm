@@ -49,6 +49,7 @@
         regexp: '^nameserver\s10.96.0.10$'
         line: 'nameserver 10.96.0.10'
         state: present
+      become: true
 
     - name: Update /etc/resolv.conf with cluster search
       lineinfile:
@@ -56,6 +57,7 @@
         regexp: '^search\sopenstack'
         line: 'search openstack.svc.cluster.local svc.cluster.local cluster.local'
         state: present
+       become: true
 
     - name: Deploy MariaDB
       environment: "{{ multinode_env }}"
