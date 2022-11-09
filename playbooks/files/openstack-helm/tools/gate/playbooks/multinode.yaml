@@ -20,6 +20,7 @@
     zuul_osh_relative_path: /opt/openstack-helm
     run_task: true
     mariadb_replica: 1
+    storage_type: nfs
 
   vars_files:
     - vars.yaml
@@ -42,8 +43,6 @@
         chdir: "{{ zuul_osh_relative_path }}"
       when: run_task|bool
 
-    # TODO -> Tasks for ceph storage
-    #
     - name: Deploy MariaDB
       environment: "{{ multinode_env }}"
       shell: |
@@ -84,7 +83,7 @@
         ./tools/deployment/multinode/045-nfs-provisioner.sh
       args:
         chdir: "{{ zuul_osh_relative_path }}"
-      when: run_task|bool
+      when: storage_type == "nfs"
 
     - name: Deploy Glance
       environment: "{{ multinode_env }}"
