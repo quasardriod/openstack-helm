@@ -3,7 +3,7 @@
 - hosts: all
   gather_facts: true
   become: true
-  
+
   vars:
     osh_repos:
       - name: infra
@@ -21,7 +21,7 @@
   pre_tasks:
   - assert:
       that:
-        - ansible_distribution == "Ubuntu" 
+        - ansible_distribution == "Ubuntu"
         - ansible_distribution_version == "20.04"
         - ansible_user == "ubuntu"
 
@@ -36,7 +36,7 @@
     delegate_to: localhost
     become: false
     run_once: true
-  
+
   - name: Copy private key on master node
     copy:
       src: "{{ssh_keypair_dir}}/{{ssh_keypair}}"
@@ -75,7 +75,7 @@
       dest: /etc/openstack-helm/deploy-key.pem
       owner: "{{ansible_user}}"
       mode: 0600
-      
+
   - name: Install google cloud public signing key
     shell: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
 
@@ -88,7 +88,7 @@
       line: 'br_netfilter'
       state: present
       create: yes
-  
+
   - name: Enable br_netfilter on runtime
     shell: modprobe br_netfilter
 
@@ -103,7 +103,7 @@
       path: "{{item.dest}}"
       state: absent
     with_items: "{{osh_repos}}"
-    
+
 #  - name: clone openstack helm code
 #    shell: git clone {{item.repo}} {{item.dest}}
 #    with_items: "{{osh_repos}}"
@@ -143,10 +143,45 @@
       echo "    node_type: {{node_type}}" >> {{k8s_nodes_list_file}}
     delegate_to: localhost
     become: false
-    
+
   - name: Load vars from {{k8s_nodes_list_file}}
     include_vars:
       file: "{{k8s_nodes_list_file}}"
+
+  - name: Update /etc/hosts file
+    lineinfile:
+      path: /etc/hosts
+      line: '{{item.ipaddr}} {{item.host}}'
+      state: present
+    with_items: "{{k8s_nodes_list}}"
+
+  - name: Start systemd-resolved
+    systemd:
+      name: systemd-resolved
+      state: started
+
+  - name: Copy /run/systemd/resolve/resolv.conf to /etc/resolv.conf
+    shell: cp --remove-destination /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
+  - name: Update /etc/resolv.conf with code-dns IP
+    lineinfile:
+      path: /etc/resolv.conf
+      regexp: '^nameserver\s10.96.0.10$'
+      line: 'nameserver 10.96.0.10'
+      state: present
+
+  - name: Update /etc/resolv.conf with cluster search
+    lineinfile:
+      path: /etc/resolv.conf
+      regexp: '^search\sopenstack'
+      line: 'search openstack.svc.cluster.local svc.cluster.local cluster.local'
+      state: present
+
+  - name: Stop and disable systemd-resolved
+    systemd:
+      name: systemd-resolved
+      state: stopped
+      enabled: no
 
   - name: Sync osh upstream code to target nodes
     synchronize:
@@ -162,17 +197,10 @@
       dest: /opt/openstack-helm-infra/tools/gate/devel/multinode-inventory.yaml
     become: false
 
-  - name: Update /etc/hosts file
-    lineinfile:
-      path: /etc/hosts
-      line: '{{item.ipaddr}} {{item.host}}'
-      state: present
-    with_items: "{{k8s_nodes_list}}"
-
   - name: default net interface
     shell: ip -4 route list 0/0 | awk '{ print $5; exit }'
     register: _default_iface
-  
+
   - name: Add kubernetes_network_default_device var in multinode vars file
     lineinfile:
       path: /opt/openstack-helm-infra/tools/gate/devel/multinode-vars.yaml
