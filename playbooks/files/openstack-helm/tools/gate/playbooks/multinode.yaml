@@ -80,6 +80,9 @@
       environment: "{{ multinode_env }}"
       shell: |
         set -xe;
+        if ! kubectl get namespace nfs;then
+          kubectl create namespace nfs
+        fi
         ./tools/deployment/multinode/045-nfs-provisioner.sh
       args:
         chdir: "{{ zuul_osh_relative_path }}"
