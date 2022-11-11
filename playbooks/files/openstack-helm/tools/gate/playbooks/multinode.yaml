@@ -43,13 +43,16 @@
         chdir: "{{ zuul_osh_relative_path }}"
       when: run_task|bool
 
-    - name: Stop and disable systemd-resolved
+    - name: Start systemd-resolved
       systemd:
         name: systemd-resolved
-        state: stopped
-        enabled: no
+        state: started
       become: true
-      
+
+    - name: Copy /run/systemd/resolve/resolv.conf to /etc/resolv.conf
+      shell: cp --remove-destination /run/systemd/resolve/resolv.conf /etc/resolv.conf
+      become: true
+
     - name: Update /etc/resolv.conf with code-dns IP
       lineinfile:
         path: /etc/resolv.conf
@@ -64,6 +67,13 @@
         regexp: '^search\sopenstack'
         line: 'search openstack.svc.cluster.local svc.cluster.local cluster.local'
         state: present
+      become: true
+
+    - name: Stop and disable systemd-resolved
+      systemd:
+        name: systemd-resolved
+        state: stopped
+        enabled: no
       become: true
 
     - name: Deploy MariaDB
